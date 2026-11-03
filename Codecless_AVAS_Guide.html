@@ -1,0 +1,1251 @@
+<meta charset="utf-8">
+<title>Codec-Less AVAS Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Source+Code+Pro:wght@400;600&display=swap">
+<style>
+/* Layout: microchip.com page pattern - white header, uppercase tab nav, grey breadcrumb, navy title band, orange/blue/green stripe.
+   Content is a datasheet-style technical reference: numbered sections, TABLE x-y / FIGURE x-y captions, standard flowchart + UML sequence symbols. */
+:root {
+  --bg: #ffffff;
+  --ink: #000000;
+  --ink-2: #4a4a4a;
+  --line: #cfd3d8;
+  --panel: #f2f2f2;
+  --code-bg: #f4f4f4;
+  --red: #e31b23;
+  --red-soft: #fdecec;
+  --navy: #1c3460;
+  --navy-2: #0f2140;
+  --navy-soft: #e9eef6;
+  --orange: #f7941d; --sky: #4cb4e7; --green: #78be43;
+  --ok: #2f7d1e;  --ok-bg: #eef7e8;
+  --warn: #a35c00; --warn-bg: #fef3e4;
+  --info-bg: #e9f5fc;
+  --f-body: "Open Sans", "Segoe UI", Arial, sans-serif;
+  --f-mono: "Source Code Pro", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+[hidden], section.page[hidden] { display: none !important; }
+.wrap { max-width: 74rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--navy); text-underline-offset: 2px; }
+
+/* header */
+header.top .wrap { padding-block: 20px 14px; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; justify-content: space-between; }
+.brand { display: flex; gap: 12px; align-items: center; }
+.mark { width: 44px; height: 44px; border-radius: 50%; background: var(--red); display: grid; place-items: center; flex: none; }
+.mark svg { width: 26px; height: 26px; }
+.brand h1 { margin: 0; font: 700 1.55rem/1.1 var(--f-body); letter-spacing: -.01em; }
+.brand h1 small { display: block; font: 400 .84rem/1.3 var(--f-body); color: var(--ink-2); margin-top: 4px; letter-spacing: 0; }
+
+/* tab nav */
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.tabs .wrap { display: flex; justify-content: space-between; gap: 2px; overflow-x: auto; scrollbar-width: thin; }
+nav.tabs button { font: 700 .82rem/1 var(--f-body); letter-spacing: .02em; text-transform: uppercase; color: var(--ink); background: none; border: 0; border-bottom: 3px solid transparent; padding: 16px 8px 13px; cursor: pointer; white-space: nowrap; }
+nav.tabs button:hover { color: var(--red); }
+nav.tabs button[aria-selected="true"] { color: var(--red); border-bottom-color: var(--red); }
+nav.tabs button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+
+/* breadcrumb, title band, stripe */
+.crumbs { background: var(--panel); }
+.crumbs .wrap { padding-block: 14px; font: 600 1rem/1.3 var(--f-body); }
+.crumbs span + span::before { content: "/"; margin: 0 10px; }
+.hero { color: #fff; background-color: var(--navy);
+  background-image:
+    linear-gradient(100deg, rgba(15,33,64,.95) 0%, rgba(28,52,96,.72) 55%, rgba(15,33,64,.92) 100%),
+    repeating-linear-gradient(0deg, rgba(120,170,230,.10) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(90deg, rgba(120,170,230,.10) 0 1px, transparent 1px 28px); }
+.hero .wrap { padding-block: 36px 38px; }
+.hero h2 { color: #fff; font: 600 2.3rem/1.15 var(--f-body); margin: 0; text-wrap: balance; }
+.hero p { color: #fff; opacity: .9; font-size: 1.02rem; max-width: 70ch; margin: 10px 0 0; }
+.stripe { display: flex; gap: 5px; height: 8px; margin-top: 5px; }
+.stripe span { flex: 1; }
+.stripe span:nth-child(1) { background: var(--orange); }
+.stripe span:nth-child(2) { background: var(--sky); }
+.stripe span:nth-child(3) { background: var(--green); }
+
+/* content */
+main .wrap { padding-block: 36px 64px; }
+section.page { display: grid; gap: 34px; }
+.intro { display: none; }
+.sec { display: grid; gap: 14px; min-width: 0; }
+h3 { font: 700 1.3rem/1.25 var(--f-body); margin: 0; padding-bottom: 8px; border-bottom: 2px solid var(--ink); text-wrap: balance; }
+h3 .n { color: var(--red); margin-right: 10px; }
+h4 { font: 700 1rem/1.3 var(--f-body); margin: 0; }
+p { margin: 0; max-width: 76ch; }
+ul, ol { margin: 0; padding-left: 1.3em; max-width: 76ch; }
+li + li { margin-top: 4px; }
+code, .mono { font-family: var(--f-mono); font-size: .9em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 2px; }
+pre { background: var(--code-bg); border: 1px solid var(--line); padding: 14px 16px; overflow-x: auto; margin: 0; font: .86rem/1.55 var(--f-mono); }
+pre code { background: none; padding: 0; }
+.cap { font: 700 .78rem/1.3 var(--f-body); letter-spacing: .04em; text-transform: uppercase; margin: 0 0 6px; }
+.cap span { color: var(--ink-2); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: 24px; align-items: start; }
+.grid2 > * { min-width: 0; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 8px 11px; border: 1px solid var(--line); vertical-align: top; }
+thead th { font: 700 .76rem/1.25 var(--f-body); letter-spacing: .03em; text-transform: uppercase; background: var(--navy); color: #fff; border-color: var(--navy); white-space: nowrap; }
+tbody tr:nth-child(even) td { background: #fafafa; }
+td.k { font-weight: 600; white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+td.mono, td .mono { white-space: nowrap; }
+.tbl table { border-style: hidden; }
+
+/* notes and badges */
+.note { border-left: 5px solid var(--sky); background: var(--info-bg); padding: 12px 16px; }
+.note.warn { border-color: var(--orange); background: var(--warn-bg); }
+.note strong:first-child { display: block; margin-bottom: 2px; }
+.pill { display: inline-block; font: 700 .7rem/1 var(--f-body); letter-spacing: .04em; text-transform: uppercase; padding: 5px 7px; white-space: nowrap; }
+.pill.hi { background: var(--red-soft); color: #a3141a; }
+.pill.md { background: var(--warn-bg); color: var(--warn); }
+.pill.lo { background: var(--panel); color: var(--ink-2); }
+.pill.done { background: var(--ok-bg); color: var(--ok); }
+.pill.open { background: var(--warn-bg); color: var(--warn); }
+
+/* figures (SVG diagrams) */
+.fig { border: 1px solid var(--line); background: #fff; padding: 14px; overflow-x: auto; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig svg text { font-family: "Open Sans", "Segoe UI", Arial, sans-serif; font-size: 13px; fill: #000; }
+.fig svg .c { text-anchor: middle; }
+.fig svg .e { text-anchor: end; }
+.fig svg .b { font-weight: 700; }
+.fig svg .s { font-size: 11.5px; fill: #333; }
+.fig svg .m { font-family: "Source Code Pro", Consolas, monospace; font-size: 11.5px; }
+.fig svg .bx { fill: #fff; stroke: #000; stroke-width: 1.4; }
+.fig svg .hl { fill: #e9eef6; stroke: #1c3460; stroke-width: 1.6; }
+.fig svg .gr { fill: #f2f2f2; stroke: #000; stroke-width: 1.4; }
+.fig svg .er { fill: #fdecec; stroke: #e31b23; stroke-width: 1.4; }
+.fig svg .nt { fill: #fff7e6; stroke: #a35c00; stroke-width: 1; }
+.fig svg .ln { fill: none; stroke: #000; stroke-width: 1.4; }
+.fig svg .ds { stroke-dasharray: 6 4; }
+.fig svg .ll { stroke: #8a8a8a; stroke-width: 1; stroke-dasharray: 4 4; }
+.fig svg .fr { fill: none; stroke: #000; stroke-width: 1; }
+.photo { border: 1px solid var(--line); background: #fff; padding: 12px; display: grid; place-items: center; }
+.photo img { display: block; width: 100%; max-width: 512px; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .8rem; color: var(--ink-2); margin-top: 8px; }
+
+/* frame strip */
+.bytes { display: flex; flex-wrap: wrap; gap: 3px; }
+.byte { border: 1px solid var(--ink); padding: 6px 8px; text-align: center; min-width: 4.4rem; }
+.byte b { display: block; font: 600 .86rem/1.2 var(--f-mono); }
+.byte small { display: block; font-size: .7rem; color: var(--ink-2); }
+.byte.sf { background: var(--red-soft); }
+.byte.pl { flex: 1 1 8rem; background: var(--panel); }
+
+/* HTML block flow (pipelines) */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; }
+.node { flex: 1 1 9rem; min-width: 9rem; border: 1.4px solid var(--ink); padding: 10px 12px; background: #fff; }
+.node.hl { background: var(--navy-soft); border-color: var(--navy); }
+.node b { display: block; font-size: .92rem; }
+.node small { display: block; color: var(--ink-2); font-size: .8rem; margin-top: 2px; }
+.link { flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 6px; font: 600 .7rem/1.2 var(--f-mono); color: var(--ink-2); min-width: 84px; text-align: center; }
+.link::after { content: "\2192"; font-size: 1.4rem; color: var(--ink); line-height: 1; }
+@media (max-width: 680px) { .flow { flex-direction: column; } .link { padding: 4px 0; } .link::after { content: "\2193"; } .node { min-width: 0; } .hero h2 { font-size: 1.8rem; } }
+
+/* layer diagram */
+.layers { display: grid; gap: 4px; }
+.layer { display: grid; grid-template-columns: 9.5rem 1fr; gap: 4px; }
+.layer > .lname { background: var(--navy); color: #fff; font: 700 .76rem/1.3 var(--f-body); text-transform: uppercase; letter-spacing: .03em; padding: 10px; display: flex; align-items: center; }
+.layer > .cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 4px; }
+.cell { border: 1.4px solid var(--ink); padding: 8px 10px; background: #fff; min-width: 0; }
+.cell b { display: block; font-size: .88rem; }
+.cell small { display: block; font: .74rem/1.35 var(--f-mono); color: var(--ink-2); word-break: break-word; }
+.layer.hw .cell { background: var(--panel); }
+@media (max-width: 560px) { .layer { grid-template-columns: 1fr; } }
+
+/* frame builder */
+.builder { border: 1px solid var(--line); background: var(--panel); padding: 16px; display: grid; gap: 12px; }
+.builder .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.builder label { display: grid; gap: 4px; font-size: .84rem; font-weight: 600; flex: 1 1 13rem; min-width: 0; }
+.builder input, .builder select { font: .9rem var(--f-mono); padding: 9px 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); width: 100%; }
+.out { font: 600 .9rem/1.6 var(--f-mono); word-break: break-all; background: #fff; border: 1px solid var(--line); padding: 10px 12px; }
+.out .s { color: var(--red); }
+.out .info { font: 400 .78rem/1.4 var(--f-body); color: var(--ink-2); margin-top: 4px; }
+.btn { font: 700 .9rem/1 var(--f-body); border: 0; background: var(--navy); color: #fff; padding: 13px 20px; cursor: pointer; }
+.btn:hover { background: var(--navy-2); }
+
+footer { background: var(--panel); color: var(--ink-2); font-size: .82rem; }
+footer .wrap { padding-block: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-6 4 12 3-9 2 3h4"/></svg></div>
+      <h1>Codec-Less Audio LED AVAS<small>dsPIC33AK512MPS512 ADC Line-In, PWM Line-Out, AVAS Engine Sound And OSP LED Control &middot; Technical Reference</small></h1>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button role="tab" data-tab="overview">Overview</button>
+    <button role="tab" data-tab="hardware">Hardware</button>
+    <button role="tab" data-tab="firmware">Firmware</button>
+    <button role="tab" data-tab="audio">Audio Path</button>
+    <button role="tab" data-tab="avas">AVAS Engine</button>
+    <button role="tab" data-tab="leds">LED Control</button>
+    <button role="tab" data-tab="lin">LIN Protocol</button>
+    <button role="tab" data-tab="build">Build &amp; Config</button>
+    <button role="tab" data-tab="status">Status</button>
+  </div>
+</nav>
+
+<div class="crumbs"><div class="wrap"><span>OSP</span><span>Without Codec</span><span id="crumb">Overview</span></div></div>
+<div class="hero"><div class="wrap"><h2 id="hero-title">System Overview</h2><p id="hero-lead"></p></div></div>
+<div class="stripe" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<main><div class="wrap">
+
+<!-- =================================================================== 1 OVERVIEW -->
+<section class="page" id="overview" role="tabpanel" aria-label="Overview">
+  <div class="intro"><h2>System Overview</h2><p>A dsPIC33AK512MPS512 samples line-in audio with its own ADC, outputs audio as 192 kHz PWM, synthesises AVAS engine sound and drives an OSP LED strip, all controlled over LIN from the SAMA7D65 HMI. No external audio codec is used.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">1.1</span>System block diagram</h3>
+    <div>
+      <p class="cap">Figure 1-1: <span>System block diagram (codec-less variant)</span></p>
+      <div class="fig"><svg viewBox="0 0 1080 372" style="min-width:820px" role="img" aria-label="System block diagram">
+        <defs><marker id="m11" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <!-- left side -->
+        <rect class="bx" x="20" y="40" width="170" height="70"/>
+        <text class="c b" x="105" y="68">SAMA7D65 HMI</text><text class="c s" x="105" y="88">WVGA touch, PyQt5 GUI</text>
+        <rect class="bx" x="20" y="160" width="170" height="110"/>
+        <text class="c b" x="105" y="190">dsPIC audio V5</text><text class="c s" x="105" y="210">J2 LINE IN &middot; J3 OUT</text><text class="c s" x="105" y="228">2&times; MCP6022</text><text class="c s" x="105" y="250">J3 &rarr; external amplifier</text>
+        <rect class="gr" x="20" y="306" width="170" height="44"/>
+        <text class="c" x="105" y="333">Potentiometer</text>
+        <!-- dsPIC -->
+        <rect class="hl" x="360" y="12" width="330" height="348"/>
+        <text class="c b" x="525" y="36">dsPIC33AK512MPS512 &middot; 200 MHz</text>
+        <rect class="bx" x="380" y="52" width="290" height="46"/><text class="c b" x="525" y="72">LIN slave</text><text class="c s" x="525" y="89">UART2 RX ISR, ring buffer, parser</text>
+        <rect class="bx" x="380" y="108" width="290" height="46"/><text class="c b" x="525" y="128">AVAS control + engine synth</text><text class="c s" x="525" y="145">avas_ctrl.c, ref_engine.c FIFO</text>
+        <rect class="bx" x="380" y="164" width="290" height="96"/><text class="c b" x="525" y="186">Audio ISR (48 kHz)</text><text class="c s" x="525" y="206">ADC4 256&times; oversampling &rarr; 20 Hz HPF</text><text class="c s" x="525" y="224">AudioTasks: engine / LINE IN + tick</text><text class="c s" x="525" y="242">PWM3 ISR 192 kHz noise shaping</text>
+        <rect class="bx" x="380" y="270" width="290" height="46"/><text class="c b" x="525" y="290">OSP driver</text><text class="c s" x="525" y="307">SPI2 TX, SPI4 RX, DMA2/3, CRC</text>
+        <text class="c s" x="525" y="342">TMR1 1 ms &middot; UART1 debug &middot; ADC5 pot</text>
+        <!-- HMI -> dsPIC -->
+        <line class="ln" x1="190" y1="75" x2="360" y2="75" marker-end="url(#m11)"/>
+        <text class="c s" x="275" y="66">LIN, 115 200 baud</text><text class="c s" x="275" y="93">2&times; MCP2003B</text>
+        <!-- audio board <-> dsPIC -->
+        <line class="ln" x1="190" y1="188" x2="360" y2="188" marker-end="url(#m11)"/>
+        <text class="c s" x="275" y="180">ADC4 AD4AN0 / AD4AN1</text><text class="c s" x="275" y="206">RB4 L &middot; RB6 R</text>
+        <line class="ln" x1="360" y1="244" x2="190" y2="244" marker-end="url(#m11)"/>
+        <text class="c s" x="275" y="236">RB8 L &middot; RB9 R</text><text class="c s" x="275" y="262">PWM5H / PWM3H 192 kHz</text>
+        <!-- pot -->
+        <line class="ln" x1="190" y1="328" x2="360" y2="328" marker-end="url(#m11)"/>
+        <text class="c s" x="275" y="320">ADC5 AD5AN0, RA7</text><text class="c s" x="275" y="346">RPM until first LIN RPM</text>
+        <!-- right side -->
+        <rect class="bx" x="860" y="40" width="200" height="80"/>
+        <text class="c b" x="960" y="66">Curiosity board</text><text class="c s" x="960" y="86">8 LEDs RC8&ndash;RC15, SW1 RF3</text><text class="c s" x="960" y="104">RGB LED RD9 / RD0 / RD2</text>
+        <line class="ln" x1="690" y1="80" x2="860" y2="80" marker-end="url(#m11)"/>
+        <text class="c s" x="775" y="72">GPIO / SCCP1&ndash;3</text><text class="c s" x="775" y="98">indicator pattern</text>
+        <rect class="bx" x="860" y="258" width="200" height="70"/>
+        <text class="c b" x="960" y="284">OSP LED strip</text><text class="c s" x="960" y="304">up to 42 LEDs, auto-detected</text>
+        <line class="ln" x1="690" y1="293" x2="860" y2="293" marker-start="url(#m11)" marker-end="url(#m11)"/>
+        <text class="c s" x="775" y="285">SPI2 4.76 MHz</text><text class="c s" x="775" y="311">RF11 TX &middot; RF8 RX &middot; RF9 CLK</text>
+        <rect class="gr" x="860" y="160" width="200" height="44"/>
+        <text class="c" x="960" y="187">Debug terminal (PC)</text>
+        <line class="ln" x1="690" y1="182" x2="860" y2="182" marker-end="url(#m11)"/>
+        <text class="c s" x="775" y="174">UART1 115 200</text><text class="c s" x="775" y="200">RH1 TX / RD1 RX</text>
+        <text class="c s" x="960" y="350">level shifters U1&ndash;U3 on interface board</text>
+      </svg></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">1.2</span>Key parameters</h3>
+      <div>
+        <p class="cap">Table 1-1: <span>Parameters taken from the source</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+          <tbody>
+          <tr><td class="k">MCU</td><td>dsPIC33AK512MPS512, 128-pin, DFP 1.3.185</td></tr>
+          <tr><td class="k">System clock</td><td>PLL1 Out 200 MHz (<code>CLK1CON = 0x29580</code>), peripheral clock 100 MHz</td></tr>
+          <tr><td class="k">Audio rate</td><td class="num">48 kHz (PG3 ADC trigger, postscale 4:1)</td></tr>
+          <tr><td class="k">Audio in</td><td>ADC4 CH6 / CH7, 256&times; oversampling, 16-bit result</td></tr>
+          <tr><td class="k">Audio out</td><td>PWM5H / PWM3H, 192 kHz, <code>MPER = 66649</code>, 1st-order noise shaping, &plusmn;8 LSB dither</td></tr>
+          <tr><td class="k">Engine sound</td><td>osp/firmware <code>engine_process()</code> via <code>ref_engine.c</code>, 1024-sample FIFO (21.3 ms)</td></tr>
+          <tr><td class="k">LIN</td><td>UART2, 115 200 baud (<code>U2BRG = 868</code>), classic checksum, ID 0x22 / PID 0xE2</td></tr>
+          <tr><td class="k">OSP</td><td>SPI2 <code>BRG = 20</code> &rarr; 4.76 MHz, CLK9 = 200 MHz, max 42 LEDs</td></tr>
+          <tr><td class="k">UI tick</td><td class="num">TMR1, PR1 = F<sub>PB</sub>/1000 &rarr; 1 ms</td></tr>
+          <tr><td class="k">Debug</td><td>UART1 115 200 baud (<code>U1BRG = 0x364</code>)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">1.3</span>Operating modes</h3>
+      <div>
+        <p class="cap">Table 1-2: <span><code>audio_mode</code> and strip owner (<code>audio_demo.c</code>)</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Mode</th><th>Selected by</th><th>Audio out</th><th>OSP strip</th></tr></thead>
+          <tbody>
+          <tr><td class="k">Power-up</td><td>Reset</td><td>Silent (AVAS off, gain 0)</td><td>Blue boot sweep, then dark</td></tr>
+          <tr><td class="k">Engine (AVAS)</td><td>LIN 0x10 = 1, 0x15 = 0, SW1</td><td>Engine sound &times; fade gain</td><td>Dark (tachometer off: <code>ENGINE_OSP_TACHOMETER = 0</code>)</td></tr>
+          <tr><td class="k">Phone (LINE IN)</td><td>LIN 0x01/02/03/05/08/09/0A, 0x15 = 1, SW1</td><td>ADC pass-through, gate, gain 3.5</td><td>VU meter or LED style effect</td></tr>
+          <tr><td class="k">Indicator</td><td>LIN 0x20 / 0x21 / 0x22 = 1</td><td>Tick WAV mixed on top</td><td>Yellow wave or parking strobe (highest priority)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="note"><strong>Same command set as the codec board</strong><p>The LIN signal IDs, OSP driver and engine synth are the same as in <code>firmware/</code> (variant A). Signals 0x14 and 0x15 exist only in this variant.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">1.4</span>Differences to the codec variant</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Item</th><th>A: firmware/ (WM8904)</th><th>B: Without_codec/ (this guide)</th></tr></thead>
+      <tbody>
+      <tr><td class="k">Audio input</td><td>WM8904 LINE / MIC over TDM, SPI1 + DMA0/1</td><td>ADC4 CH6/CH7 on RB4 / RB6</td></tr>
+      <tr><td class="k">Audio output</td><td>WM8904 headphone amplifier</td><td>PWM5H RB8 / PWM3H RB9 through dsPIC audio V5 board</td></tr>
+      <tr><td class="k">DSP timing</td><td>32-sample blocks in <code>_DMA0Interrupt</code> (1.5 kHz)</td><td>One sample per <code>_AD4CH7Interrupt</code>; engine blocks made in main loop</td></tr>
+      <tr><td class="k">F<sub>CY</sub> / SPI2</td><td>192 MHz, BRG 19 &rarr; 4.8 MHz</td><td>200 MHz, BRG 20 &rarr; 4.76 MHz</td></tr>
+      <tr><td class="k">LIN pins</td><td>UART2 TX RF10 / RX RB13</td><td>UART2 TX RA6 / RX RA5 (XPRO2)</td></tr>
+      <tr><td class="k">AVAS tachometer</td><td>Active on OSP strip</td><td>Disabled (<code>ENGINE_OSP_TACHOMETER = 0</code>)</td></tr>
+      <tr><td class="k">Extra LIN signals</td><td>&mdash;</td><td>0x14 engine type, 0x15 audio source</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- =================================================================== 2 HARDWARE -->
+<section class="page" id="hardware" role="tabpanel" aria-label="Hardware" hidden>
+  <div class="intro"><h2>Hardware &amp; Pin Assignment</h2><p>Device data, the boards that make up the set-up, and every pin the firmware uses, with physical pin numbers from the DFP device file.</p></div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">2.1</span>Device summary</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Item</th><th>dsPIC33AK512MPS512</th></tr></thead>
+        <tbody>
+        <tr><td class="k">Core</td><td>32-bit dsPIC33A with FPU, run at 200 MHz</td></tr>
+        <tr><td class="k">Data RAM</td><td class="num">64 KB (0x4000&ndash;0x13FFF, X 0x4000&ndash;0xBFFF, Y 0xC000&ndash;0x13FFF)</td></tr>
+        <tr><td class="k">Package</td><td>128 pins (DFP <code>DSPIC33AK512MPS512.PIC</code>)</td></tr>
+        <tr><td class="k">ADC used</td><td>ADC4 (audio), ADC5 (pot)</td></tr>
+        <tr><td class="k">PWM used</td><td>PG3, PG5, high-resolution (<code>HREN</code>), master clock CLK5 800 MHz</td></tr>
+        <tr><td class="k">Device pack</td><td>dsPIC33AK-MP_DFP 1.3.185</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">2.2</span>Boards</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Board</th><th>Role</th><th>Connection</th></tr></thead>
+        <tbody>
+        <tr><td class="k">Curiosity Platform + DIM</td><td>dsPIC33AK512MPS512, LEDs, switches, pot, PKOB4 debugger</td><td>&mdash;</td></tr>
+        <tr><td class="k">dsPIC audio V5</td><td>Line-in buffer and PWM reconstruction filter (2&times; MCP6022)</td><td>XPRO1 header (J1 2&times;10)</td></tr>
+        <tr><td class="k">MCP2003B Click</td><td>LIN transceiver (slave side)</td><td>XPRO2: RA5 / RA6</td></tr>
+        <tr><td class="k">OSP interface board</td><td>Level shifters U1 (CLK), U2 (RX), U3 (TX)</td><td>mikroBUS B: RF9 / RF8 / RF11</td></tr>
+        <tr><td class="k">OSP LED strip</td><td>OSRAM OSP LEDs, counted by <code>osp_init()</code></td><td>Interface board SIOP / SION</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">2.3</span>Pin assignment</h3>
+    <div>
+      <p class="cap">Table 2-1: <span>Pins used by the firmware (<code>pins.c</code>, <code>lin_slave.c</code>, <code>osp.c</code>, <code>osp_board.c</code>, <code>user_interface.h</code>)</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Pin</th><th>Port</th><th>Function</th><th>Peripheral / PPS</th><th>Direction</th><th>Set in</th></tr></thead>
+        <tbody>
+        <tr><td class="num">57</td><td class="mono">RB4</td><td>Line in left</td><td>AD4AN0, ADC4 CH6 <code>PINSEL = 0</code></td><td>Analog</td><td><code>ANSELB = 0xCCFB</code></td></tr>
+        <tr><td class="num">58</td><td class="mono">RB6</td><td>Line in right</td><td>AD4AN1, ADC4 CH7 <code>PINSEL = 1</code></td><td>Analog</td><td><code>ANSELB = 0xCCFB</code></td></tr>
+        <tr><td class="num">45</td><td class="mono">RB8</td><td>Audio out left</td><td>PWM5H, <code>RPOR6.RP25R = 9</code></td><td>Out</td><td><code>TRISB = 0xECFF</code></td></tr>
+        <tr><td class="num">46</td><td class="mono">RB9</td><td>Audio out right</td><td>PWM3H, <code>RPOR6.RP26R = 5</code></td><td>Out</td><td><code>TRISB = 0xECFF</code></td></tr>
+        <tr><td class="num">42</td><td class="mono">RF11</td><td>OSP TX (SIOP via U3)</td><td>SDO2, <code>RP92R = 28</code></td><td>TRIS = 1 (input until SPI drives)</td><td><code>OSP_Board_Init()</code></td></tr>
+        <tr><td class="num">39</td><td class="mono">RF8</td><td>OSP RX / supply sense (via U2)</td><td>SDI4 &larr; RP89</td><td>In</td><td><code>OSP_Board_Init()</code></td></tr>
+        <tr><td class="num">36</td><td class="mono">RF9</td><td>OSP clock (via U1)</td><td>SCK2 out <code>RP90R = 29</code>, SCK4 in</td><td>Out</td><td><code>OSP_SPI_PIN_SETTING()</code></td></tr>
+        <tr><td class="num">29</td><td class="mono">RA5</td><td>LIN RX (MCP2003B RXD)</td><td>U2RX &larr; RP6</td><td>In</td><td><code>lin_uart2_init()</code></td></tr>
+        <tr><td class="num">31</td><td class="mono">RA6</td><td>LIN TX (MCP2003B TXD)</td><td>U2TX &rarr; RP7, idles high</td><td>Out</td><td><code>lin_uart2_init()</code></td></tr>
+        <tr><td class="num">100</td><td class="mono">RH1</td><td>Debug TX</td><td>U1TX, <code>RP114R = 0x13</code></td><td>Out</td><td><code>pins.c</code></td></tr>
+        <tr><td class="num">102</td><td class="mono">RD1</td><td>Debug RX</td><td>U1RX &larr; RP50 (<code>U1RXR = 0x32</code>)</td><td>In</td><td><code>pins.c</code></td></tr>
+        <tr><td class="num">5</td><td class="mono">RA7</td><td>Potentiometer</td><td>AD5AN0, ADC5, software trigger</td><td>Analog</td><td><code>adc5.c</code></td></tr>
+        <tr><td class="num">63</td><td class="mono">RF3</td><td>SW1: Engine / Phone toggle</td><td>GPIO, active low</td><td>In</td><td><code>user_interface.h</code></td></tr>
+        <tr><td class="num">48</td><td class="mono">RF0</td><td>SW2: V8 / Bullet toggle</td><td>GPIO, active low</td><td>In</td><td><code>user_interface.h</code></td></tr>
+        <tr><td class="num">71, 72, 87, 88, 91, 92, 95, 96</td><td class="mono">RC8&ndash;RC15</td><td>LED0&ndash;LED7 (indicator pattern)</td><td>GPIO</td><td>Out</td><td><code>TRISC = 0x00E7</code></td></tr>
+        <tr><td class="num">98 / 101 / 106</td><td class="mono">RD9 / RD0 / RD2</td><td>RGB LED red / green / blue</td><td>OCM2 / OCM1 / OCM3 (PPS 40 / 39 / 41)</td><td>Out</td><td><code>pins.c</code> (<code>RGB_VU_METER</code>)</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="note warn"><strong>RF11 must be an input before <code>osp_init()</code></strong><p>MCC sets <code>TRISF = 0x07EF</code> (RF11 output, left over from the codec SPI1 SDO). Driven low, RF11 pulls SIOP low through U3, the supply test on RF8 reads 0 V and the strip never answers. <code>OSP_Board_Init()</code> sets <code>TRISFbits.TRISF11 = 1</code>, as in osp/firmware (<code>TRISF = 0x0BEF</code>).</p></div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">2.4</span>dsPIC audio V5 board</h3>
+      <div>
+        <p class="cap">Figure 2-1: <span>KiCad 3D view (<code>pcb/dsPIC audio V5</code>)</span></p>
+        <div class="photo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABCwAAAOZCAYAAADVsrHYAAAABHNCSVQICAgIfAhkiAAAIABJREFUeJzs3XucHGd95/tf9XTPSLJkCVs2M2kDxhhy4rOHTQ5YhgXLl3gtWybehRjCxeFYFsFDEoLZJbBCsxtvVrJiyAmw+ATpJJIcExtfZOMIMBYYR5YINrZZLiGQALEdTDPj+0UmtjUzXftHd1U/VV33rstTVZ83r8HTPdXVTz9dM+rft57nKeO++35uCgAAAAAAgEYaRTcAAAAAAADAjcACAAAAAABoh8ACAAAAAABop2maLGEBAAAAAAD0wggLAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgHQILAAAAAACgnaZpmkW3AQAAAAAAwIERFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDtN0zSLbgMAAAAAAIADIywAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2CCwAAAAAAIB2mqZpFt0GAAAAAAAAB0ZYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7RBYAAAAAAAA7TRN0yy6DQAAAAAAAA6MsAAAAAAAANppFt0AAEB1ve51Lx267+67f1pAS4BkOIYBACiOcddd/8KcEABAJK/+tZfKWEN6X2MiRgbPYZoi3f6XaYr8r/soDpEexzHcEDEyOIhN6R+/3d5/OYYBAEiGwAIAMKR9wktlbGwQTDSVkCLvwKLrc/ufvkcRCH/HnegMJsa8juGcAgu/rx9xDAMAEIgpIQAAERFZfvSLpDXeklarHP80vPLfvEQWFrr21+yDDxfdJBToiKNXSavZlGarKa1mOY7hE046ThYWujI/35XZB+aKbg4AANopx7/oAIBMLDbHpNUqT0gR5JjjjrHDi/mFrjz/1NNFNwkZ6/bDiWZFjt/5ha4szC/K/HxXXnjmmaKbBABA4bhKCADU0DMvvCDPd6s9I7B5xAqRiWWy0Ch/MYuBp/71X+UXCwtyuOiGZGxs2XJZbI4X3QwAAApFYAEANdJ59GF57Jn6jTx4btGUZ154oehmYASdRx+RR55+quhm5O65rinPPP980c0AAKAQTdOs9hk2AIDIP97/I5mYWCITE0uKbkqhHn/2kCzMz8uxq15UdFMQ0Y//5X5ptcZlfHyi6KYU6rFnnpbDhw/L1NGri24KAAC5YYQFAFTcd3/wvaKboJ3Oow/L/T/jCg06+/b3vy0/+PEPi26Gdv7l5z8rugkAAOSGwAIAKuxvv/41YSSdD9OUv//H7xfdCng4ePedHLc+TDHlO//w3aKbAQBALggsAKDKTJPCz4PZ7xfTNOWue78hX91/W9FNQt+Xv/oFx/sDJ6tf/vbg14puCgAAmSOwAICK2nPL55TCr+jW6EUtiE0xRUxTPv+FG4puVu3d+PlrnO8NB66D87jtys17ryu6SQAAZIrAAgAqalDcdEXMbtHN0YYaVDgLY1P++nM7i25ebe2++jNDYYVp9sIk9HgduwAAVBmBBQBUFWeqPVlF8HBxXHTL6s0vSOLY7TFFHCEOxywAoA4ILACgoij8PJjiEVQ4+2b7X/xZgQ2spz/5+Izv+8Jx20O/AADqiMACACrKNLv2VAcKnB7O4uvJ7Jr28epeX4T3p8+aHsMxCwCokSb/4AFANXFG1slrbYReQTy8vkfd+ypvaljhPV2nF7zVlWeA0z9GOVYBAFXGCAsAqCizy0gCB4+CWJTCD8XxDJPMLuuw9HlOlSm6UQAA5IDAAgAqKs/1AE4+ZW0hj43KEdwQ4mhHvaKN10gLsac3ZSvpsZj1McxoKQBAXRFYAEBF+ReACfblcZ+hfH/vNw8kbebwY43el2F4bp5I0IKOlH7Fc74nXed6FkOXn81O0uPY/bj+Iez8JUnIb10PAADqgMACACoqrasuqMWX9X2aYYLfczqe3Aowhr7CG+JcuJEz1bryXHTTY6pImHf85ln2ceE+VAz3MZzxcexohO8Pg3mGNhy3AICaILAAgIqKc5baaDR6X4YhRr+qU/MAq9Dr3ci23Ybre696zypHe200xDB67b/wt84d2p/XQo5i98nwgpsoht9IAq8gw63RaEjDaIhhNOS6m7/mPGbcB1BeQYWbx/P2QpTe75zRaMhvu45f/1FBBBYAgHogsACAihpexFApdkyRsbExaTR6X4ZV/IvY37tDC2uUg3Uz65LJq6ZUa77BiAvDbte1N+6TRmNMxhpjMjY25nvFCUZX6CdsdIX6NTbWlMZYs3cMj42JSL/o7wcA9jHhGlGh3s6D36Agw/W7Zd2+xjp++7+b9mgK9xcAADVBYAEAFeVX7DWbTWmMNfpFnVLYuW+L2JWdY4SFcn/mDGeBN/TjfnsH00bU1yPSGBuTZrMlzVaLYfWa8x1N4Th2W9JsNkVMs1/sG45jQD2GbQWNqAh9SiW0cH/1HmxKc6wpzWZraJQUAAB1QWABABXlLvwmliyR8fGJ3tAIU0TE9Agq+lNCRIanhVj/l0Px5/kUyloW3l+GY5ueQYE3MT4hExNLmA6iKe+Ards/dpfKxPiE9N7P3uE7FLaJMpVJvNesGFoHJQ/udqhPb/3u9TcyRLkt/fVXxJTx8QmZmFhKYAEAqJ0m//ABQDVZxc0RRyyXJUuW9YMK0y6CRGQ4qFBDARFHAagWeLnUeoaIYQ6mnljtcP+r1bvfEMMwB0WpWK9fZLDQZu/7JUuXyVizKc8//5zvU/NvY/7cIYVpmrLsiOUyMb5E7NLdlP6Upt7PjX4C4XkcK/xG6Ij0w48sXpAV9FnHsPUkyqGlhiju0RWD6SDWQ0xZumyZNBoNOXTo6UH7OVYBABXGCAsAqCjT7IrZ7Q6Gk1tBRX+EhVXoDIIKQ9QRFlEW2sysVHIXnB4/tkd/qIuEithnp60XOqjnBt+bpilHLFsuy5Ytz6L1SMAOKrqmHLF8hRxxxAr7OB3M4BksmDoYISSO6SBeoyxUec4OCRop5LjLFRDax644AxorsLnumu1ZNhsAAG0QWABARZlmr/BTz9TaBaBSBDnPULumgbgKviKmhahPNdQepd1W0eq+dKl7hMXgKiG9vli6dFn2LwahrPdr+YqVrkVipZ9WOG9bh7U1hWJw7A4vuOkZEuT54pQmDE1ZUYJCKyx0rLOijDKyApuLNv4n+dLez+X8CgAAyB+BBQBU1PIVRyoBxWA+vOdZaulPq1DXAfCq6PKu8tSndiQX4hhGPzwVwLS/zP5UmMEIC2UBQ7HW91jaW98ChTFNU1asWDkI1BzhkjJSxgotBoux2CNt/BbcNFy38wjdou7ePbrCtOMJrxEWgxDuLW/dIAf235pBywEA0AeBBQBUlD3f31pg0jpba00HUb53rAEg4jlk3X1fljPnh0ZXuEZ5GI5tDCVgcV5NwQorrNEU6ugL+xS9OuoEhekFbINgSZ3KZC0S6xhxoRTvzukgrivdBMjrHfed0iTONSzEFU7Yr9Nqr+tnZ5395pxeAQAAxSCwAICqMl1nZmUQYIjje3MwnUI5I63LUPrQ51TPoiujKdR1AKzT84Ma0HsRx7HmWJYvAwHM7iBssqZ82Mevdb/IYMSFDN5TkcF0kKCDxe9HeYRv9m2PER5Wsx2joNQITQkpHFtwpRsAQMURWABARakjDRwFjz3CwnUm177EYp9fdZfTSAu/0RX294bzy3T/T32d4jw77Qwt+v/tL1Ba6LyXmnr00VnX++OaEmIHTq61HaztRBklJMpaJz5TQPJ6hw3XjaFpVup0JhE7cHOMDvI4fh2/uwAAVBiBBQBUVO+MtbPIU+f+O0dbKIWeiF1puQMCUeqqXPicMHcuvOkaXWEOphDYr3OwAIJzG1eIY3ZNzloX4Nhjf0nsq4SIM2zzKtDV0UJ2gCGmvQaLyh0a5LVorLsRvtNCfEZXDH5HZWikifWau12OVQBAtRFYAEBFdfvrVrjPXA8KHnU9i8FZau+EIPfmR2qC0f//odEVrmDCUQC7imFraL1pmtI1u8JZ6/yZZle6Zm+Uizp6wh1a9LZV1nawp//0Qzd1hJCL+/4iQ7fhtqivSX2Ng2N3EM5Yj2CEBQCg+oyDB/+Zf+0AIGdvfOMJRTfB088eExlr9L4aDZGxsf5/1fsazgUNszphbQ2A6Pa/rO9Ncd63UuOLe3z96/cX3YRM6Hr8ioj8/PHBcRr03yKOYfU4Vm+vWprBk6egqscvAKA8GGEBALANDZ933ed1BZE8hK1nAdj81q8IOWDyOHvjOdKCAxkAAF8EFgCAgaDiLqDoy6LYizIzZWgRQ9TeUMDm/mGOa1iEPg3HLwAAgQgsAAA2tZYzvO5U5DWf0Hd0BcUevHgcF0VczjSsDfbvGccxAAC+CCwAAAPuM9Ae00KKUsbh9P/j8g8X3YTacVzW1ONnXrIOLjxHBvm0EQAADBBYAABs1kKEvmFAziMtwkZXUO9hiHtOSIxpIHlMbTJcxy6hBQAA/ggsAABOSnHntQiniHdhl1lw4b4spBWq5LgWAcojaIRFnutXeD23YQTcBgAAQwgsAAA2dYSF+0oLOtRW7tEfOrQJmlFH4wQct7le093VDsclVTmIAQDwRWABAHBSAoqwE9KZF31qYWf9HyMsEGBohEVIuJXnMSzibBdhBQAAwZqmmes5BgCAxobWsPBY6dL0uDsXhojR/yfLNETELEdewb+zOfMYYaGGW0HBRdbHk2GImGa/PWb/OTU+iDl2AQBFY4QFAMDJPcLCGBR8eZ+ldp0kL+UIiy3bPlJ0E2rFb4TF4IfBj0/7WPZbdJMRFgAAhCOwAADYPEdY+BRVuS+8abiCCylFXoG8qaMpDGeAYR0vRYwbUEMU1rAAACCaZtENAABoxmMNC8MQOfX1awtr0jfvPtArMq1Crz9+nwHrcHOMDLLu6Htjgcfw3XcfEJHBtBDrWGbWBQAA/ggsAECxZu/OjojIxMQT2T7Rqdvb2T5BMlaRt+6M4go7L6e8zrs9B+46kHNLkjl138c7RbchVZoevyIiYoisO1Ov41dE5HUex/CBuw5oPcKicset5l544SgREbnn/I36/n4BQM6MAwd+QrYPoPbW7N3Z8Q0ptuhXnJ18in4FWRXd+03NApGZ6WQFpGbHMMdvPrQ7fkWSH8M188ILRxFcAICwhgUAyIm7LvcPKzR11NHHFt0EAEBGJiaekBN3XU64A6D2mBICoNZO3ffxjrRbRTcjES3PniJT6771WHvfa1aXvojh2AXCTbVbMrXv452D6/6QkRYAaovAAkBt1WV+9re+/1T/u95kecO1EuHwbeek+sFN096NusWrf3lFeo3t+9b3n7aePXSOf+DPDRHDY2nOX/2VlYnbhvzc9/dPKe9vhOPXEDEk+vGbxbErku3xy7FbP6cSWgCosabJ8tQAamjtV/601GHFvlv3BP583foL7G1OeNmqoZDBcdvjcqFFevI5kVe8IqQo8/ina6jp/PNWeq84flXvm4yO32eeEzly6SgtHJbk+PVsts/x+/QvRFYekaRlKLNT9328c+DsDxFaAKgdRlgAqJ01X9jVkYmiW5EPU0RWZXMS2d5/2lYt6X/jLlJRO1keuyLlPn5fu+ZUue+egxk+A3Sz5gu7Ovf8xsWEFgBqhUU3AdTOkpItsDkKI+OvLP4RMYzB5VVRbyevOZXjF+ir079dAGAhsABQK2u+sKvUU0EAAPXFv2EA6obAAkCtPPnYw0U3AQCARPg3DEDdsIYFgFqZKuklTHWnrgUQdyj8Qtf5IK/Hu+9zX1mB4fcYBccvymKq3ZIfF90IAMgRgQUAVNzTzyo3/CqjNO5X7tv9lzfI6tUvlgt/6zTPh19z40F59JGfy0Ubf8vnCSR8RcSgK4UEPdYUWbk8ZN/QwtfuOJj+8Rth2+uu/aIceeQqecdvvtFz093XfFUee/Rh+Z3pC312JqHHYGATOH4BABARAgsAqLxHnlwUMU0xTRHTNMUUUxpGQ4xGQxpGf2ZgwCnewLO/Pj88/81vExGRa288KBNLlkqr1RLTNGVhYUGeeeZJOe30M0RE5PHHF6LtONLlHAzPzdyXwxQRWbm8vDMi133rsfa+16yuxTz2R5/q9o7Z3sHbP34l8+P33697kxgi8rmb/k4mJpbI2FhTREw5fPgFefrpJ+XMXz9LRNI8fg3fzdzH7yva5T12AQCIi8ACACru4bmHnQVfP7QwTeeXmO77REwZ3C/SL6js7027wlK/V604cpX9vWGIjI+PyerVk/IP3//h8MaGiNEvzwxrzLxh2AWbdV9rfEImJpb07vcbWu8ac2+4vnlFe8qnt6CTh+fmXMeoxDyGTdcxKx7Hr2ndNWT58iMdt5csWSZLlizzPH4N64BUjmP7+FWO44mJJTI+3r+ucoLjl2MXAFAnTdPvX2kAQCU88/RTEYIGq2gr8N8E78xjyPz8YfnXXxxy3Wt4Foz+wQdFXxk8/dRTIhJ2zKrfF3f8Rv04NT9/2HWPdcz2vg87jjl2wWd3AHXCCAsAqLgf/+gfim6Cds799V8pugmIgGPXA8cuAKBGmAgJAAAAAAC0wwgLAKi4D/zuW4tuApAIxy4AAPXGCAsAAAAAAKAdAgsAAAAAAKAdAgsAAAAAAKAdAgsAAEpm3bceaxfdBgAAgKwRWAAAAAAAAO00TdMsug0AAAAAIuCzO4A6YYQFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQDoEFAAAAAADQTtM0zaLbAAAAACACPrsDqBNGWABABe27dU/RTQCQofvuOVh0EwAAyByBBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0E7TNM2i2wAAKLF16y+QfbfuKboZQ3RtFwCMgs/uAOqEERYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7TdM0i24DAAAAgAj47A6gThhhAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtNM0TbPoNgAAAACIgM/uAOqEERYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7TdM0i24DAAAAgAj47A6gThhhAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtENgAQAAAAAAtNM0TbPoNgAAAACIgM/uAOqEERYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAAAAAAEA7BBYAgJHsu3VP0U3wpGu7AAAAEA2BBQAAAAAA0A6BBQAAAAAA0A6BBQAAAAAA0E7TNM2i2wAAAAAgAj67A6gTRlgAAAAAAADtEFgAAAAAAADtEFgAAAAAAADtNItuAABUzclr1jpu33vPgYJaAh3pfny42yeiXxtRHN2PXwBAtTDCAgBSdtTqY4tuAgBkzhQWfwQAZIsRFgCQAc46wo/ux4bu7UOx1OPjtWtOLbAlAIA6YIQFAAAAAADQDoEFAAAAAADQTtM0mX8IAAAAlAGf3QHUCSMsAAAAAACAdggsAAAAAACAdggsAAAAAACAdggsAAAAAACAdppFNwAAgDrpum5z5gBl4j5+AQDIEp+TAAAAAACAdggsAAAAAACAdpgSAgBAjjhTgDLj+AUA5KlpmmbRbQAAAAAQAZ/dAdQJQTkAAAAAANAOgQUAAAAAANAOa1gAQMr23bqn6CbIuvUXyBOPPTJ0/733HCigNUB8J69ZO3Qfx69e7rvnYNFNAABUHIEFAFQUxR3KjOMXAAAQWAAAasF9xp6CGGXC8QsAqCPWsAAAAAAAANphhAUAoBY4I40y4/gFANQRIywAAAAAAIB2mqZpFt0GAAAAABHw2R1AnTDCAgAAAAAAaIfAAgAAAAAAaIfAAgAAAAAAaIfAAgAAAAAAaIfAAgAAAAAAaKdZdAMAANk5eM/PHbdPXfNLBbWkeH9376x0ldX169wXZfD1e2cdV0Oo+/vF7zIAoI4ILACgwv5dv6jpdkUWuwU3pmCvO3lKRERMk74og9fzfjnwuwwAqCMCCwAIMzPdOfkrP2hH3fzeew5k2ZpYxqz/NkRaNZ8EaPWFGCLNsaAt83XymrWRtz3q6GMzfw5djl9d36+i6Pq7HOfYEhG59+yTMmoJAKCKmupwSwAAACAL9559UqfoNlQBn90B1IlGGT0A6KtsH7T33bqn6CYgA088/kjRTQAAAMgNgQUARFS20AIAdMHfTwBAEgQWABADH7qRtqNWJ1uXAigL/m4CAJIisACAmPjwDQAAAGSPwAIAgIojZENROPYAAKMgsACABPgQDgAAAGSLwAIAEiK0QBG4UgjKgr+RAIBREVgAwAj4QI40sPAmAADAsKZpmkW3AQBK7d6zT+qc/JUftItuBwDogjA3O3x2B1AnjLAAAAAAAADaaRbdAACognvPPqkjW7YzygKJ3XvPgcjbrjv3gkz3D0Tle1zNTOfbEABAJTHCAgAAAAAAaIfAAgAAAAAAaIfAAgAAAAAAaIc1LAAgDGtTIEP7bt2T/ZNwDCNvfsfczDRXDwEARMYICwAASiLJYpsAAABlRWABAAAAAAC00zRNs+g2AAAAAIiAz+4A6oQRFgAAAAAAQDsEFgAAAAAAQDsEFgAAAAAAQDsEFgAAlAhXCgEAAHVBYAEAAAAAALRDYAEAAAAAALRDYAEAAAAAALRDYAEAAAAAALTTNE2z6DYAgB62bG+LiMjMdKfglgAA4InP7gDqpFl0AwCgDF67Zm3RTQDk6KOPTfQ4jl/o4L6zTyIMBgDEwpQQAIiAD9rQweOPP1J0EwAAAHLDCAsACNOfInLf2Sd1XvuVH7SLbo5O/uKqvbJkaVOWLBmTJUuasnTpmLRaDWmISMPof/W/N2Luu9sVWfM6RgYgfQfvOmAfn2PS+29cC12RxcXefxcWe1/zC6Y8/8K8PP/8vFz4tnNTb3eZeYa+7ml41u0wTNsDgNogsACAGKKEFkevHgzbf/yx6pwR/4MPXiZLlx0hS5cdIcuW9v6btb/7xgG7GFxYFDm8YMpzzx2W5587LO9+x3mZP39ejl59rOy7dU+hUzfuu+eAiFRr+sif/8UtsnRpU5Yua/b+u7QpE+MZDi5Vgo+dV/+NPP/8vDz//Avyr794Vn7xi0PyJ1s+lN1z505dRyFB4uNlZroTObQAANQCgQUAxBQWWjz+2CN2aHH06mNLHVqsO/c3ZcWKlbLiyJWh26ZUskS2Y9fn5fnnDsuzzx6SQ4eeqlgxiKT+8L9cIUcsXyFHLF9RWBv8fhfe/8HL5BfPHpInnnhUbrnp6lzblJ3w3/xYU+q8Rk+oIQajKwCgVljDAgASsM5G+1FDCnXERZn836/5d5G3zTOs8Huu3/uD/ypvf9clObYkfWHHVeL9xigYs2pD1t769vfIJb+3afgHygFj5J2qORpgOI7d004/V37lpH9bRINSEP0qFamu/0NYAQC1Q2ABAHH1z/bFCS0qK8HaFGk/v9va08/Jvx05YuHNYaedsT50m0KPU5Xh+m/JOP/u5fAiuNw0ANQagQUAxBFzaLIVWpRxlMX/+tY3QrcxfG8UoOjnR2Hu/NtbA39e1KFh+Dy3dd8Pf/DdHFuTv5FHV6h/b7dsb7O+BQDUT9M0ow/rA4Ba8wgroizCaa1pcd89B0q3oOG+L99kf/8HH7ysuIZ4MBxnqgdl4YH9txXRnJHUYjROxm687i+HpoT4BQZZivJ8ny/p+hVxRlekMhVEDYWtv79btrfrPtqCz+4A6oRFNwEgioCRFVFDCxEpZWhh+Z+fuMxx+9Pb9xTTEJfNH35P0U1IVZmPkaLt+P+2OW5/5i9vKaglff2a/r9uKvfaKsMKGLPCFUQAoJYILABARAI/CEeYBhIltKhaEfr+6Qt8f3bwrvQXblz369XqP7eij4+inz8L73vPf/S8n+MzmajHSKoLbQIAao3AAkB9eYUU7kDCvY1fsDEz3YkSWtTFqa+vfvGG8uL4BACgHAgsAEAktRXo4w7nd19pJM+z3F5XOaniWfYgRfb/KM/fu1LI6gxa1KNbvxTRhiLp1v+x/6bNTIdvyNU/AAARGLfccg8r9wCojf9w787sPxwzzxp5iFvocVwiD1GPS7/AImhRTUIOERH5m5M38rsMoDYYYQEAaYvwYXq2M29/P9VuDd2v3ody83uvo/48NRUp8rx+R3T/vQlqs/v+yooyBS9oWwBALTWKbgAAAFWlTVgB6MY/QDs94eMAABXECAsAADJAWAEoogYNM9PXiAihBABARESapskSFgAApImwAkBW+OwOoE4YYQEAyI7fAnoVXlivdGFF2HoBfu9fnO2DHpP1++x+3qDnCzv23MdtlLUWRnl9efZznDUmAADICWtYAACy5VdAVXBhvdKFFVHEfZ+8tg/aR5bHgV9bkjynbsdrmv1MWAEA0BQjLAAAxQkaaVEypQ8r0hhJYW3v9b7G3X5Uatu9RkWk8Zxe+83iePbru6j9HLR9yUc0AQCqjREWAACMqPRhhR+riI06rSKt+9MUtaCvgrivTbdRIwAAuBBYAACJeqoRAAAgAElEQVSKVfKiqbJhRZkxaiCememOPQKj5L+PAIBqIbAAACChyocVcQv/rLdPi9/Ikbpy9wPBBQBAE6xhAQA1MP6xHW3pXwnv8Pw6kZnj9TjzrJ7Zzapo3fJge7y1z76Z1uuvXFgxaoGaxuKc8DbqFVaiBENxr34CAEAOGGEBABW38lM72mPKX3u1eK+DFUfsE8MY3E779VcirAgSpSj2W+Ayre0xLKuwQr1NcAEAKFjTNM2i2wAAyNB4S6RripimSLdbdGs8ZDzKotUSWVgUWVxMe8/eShtWuIvUuAVx1McQVsRn/Y6ot6NgLY9K4rM7gDphhAUAVNyK5Q0Zb4k0x0QaDZGPv/RV+hYvGZzRHW+JjI2JGEbvtWf5+ksbVqjinF0nrMhP0iuA0M8AgBIjsACAirv/3b/TWTIhMj4ucsVxr+p84B1nFN2kYRkWVXOXXNJpNUU+9pJeUJHH6y9tWGGJElqUOawoazEfNUwq6+sDAMCFRTcBoAY677lE/8LFPew9RU++vwSvX1deU3XKHFaUXdgUKsIKAECFEFgAAIBhfgGS1yUwvR6bdPs0BBX1Uae6lKHgd7dTfW1Rriyi9lPYtgAAFIApIQAAfVAgFcF/Bb+kV4vQ4RKnatvVL/fPvR7j9zhdjs+gkRVp7CvofgAAcsQICwCoCHXBR5HgdRRyXRwyx8Inah/E6avKm5n+ecjPvS95GX3/xRW+fqNEwi7xmccokCiSXIo07ecBAKBABBYAUAHuAjzJYzMp2pOcvU1QPI3y+tXH1zq4qKokxXhejwEAAIGYEgIAJTdqsZ72fvKWZrvL2gd1Efb+6Pj+6dgmAADKomma/lNXAQB6S7sYmu3Ml2qUQRbFYJQ+iFI4l6kf0xD3vbD7J2zthZnpTpx96zJaZqQ2B/VJfyRH4v5G6fHZHUCdMCUEAHIWpdCIssZEVmdu61hsuwX1QdR+j9yPEYrT0McWPB0hybEYtX+SHudFHscjtXn3ztDFM7PsbwAAdEJgAQA5GqnQcBW2U+7tNmxMv2iNU0xHvUpBSsV12oFNaKEY80y/SApn+0tweU21T4xtW337cHJy0v5+7eln9r55QESs7/21RUT++I8+JKefsd6+c25ubvC8rgeYmzZr02dqn8wp91/y3otl795b7dt2n0TsDxGRz151pbzs+JPsH6h9orL6g9ACAFA2BBYAkBO/wk4tMaa8ijqRyIXdVTs/KSe84tX2HX4FjCHBRV2kwkbjYtrqX/erH2u8IMcc+zI77HH0ccRC8cD+O+w7nnziIZk7POgntXCOXTT7BUAa97MqKKxIZf+GO5YIV0SBHjXASUMjYp8Y27a2dQpxAACIikU3ASBnWRYxhuH8s37xxe9Opx0z0x3Hl0UdVeHexr2ttU3Ggl6Xu39GFTSXXG1HotEgJZkOkpdGI3pgkXVQELENSzN/jhh9AgBAGRFYAECFxD0LbWzbekmiJ4paJLsDjYKlXeB1u93g58u7cI46LaeE0g6bcnBU1k+QZNRJncx25j2/AADlwZQQAKiQOGeh+7441W5lEyRkHFb4DfX3ngTTE3UIfVRardZf4bBChOLcSwlDnEzFWRDXjbU9AEBP/EsHABWibVGnSTGddv9kGlgE9VnNpoOIJArjKo8+kdRGTjD6AgD0xAgLAKiQzM64+hXPcQpmDRaPzHMNi9jS6OMKYzTBMG0DyhzECRfOu32//bv1pbNOD/x9GvnKPgCAVDW1Gs4KABhJrmdcwwppr6teFBxapN0/ZtfMdqwiYYWtaqMJGo3RD5y6BhZBYcUpt90QOJrL/fPVzWM9Qwydgws+uwOoE0ZYAECFZFbAzEx3dFtAM4m0+6drdtPLK6w+DZvuob4PXqMyKjpdpGrFeSOFESNphB5l4hdUnHf7/vZjC48k2udjC4/YIcY3z3mbZ3ChY2gBAHVRr3/pAKDiMi3qKlAAl2INC3dw4ffzKPuokLJNCZm88rLvBv08jREjVQtxgniFFefdvr99ym03JA4r3E657Ya2On0k6LkBAPlghAUAVEiSM65+H8Y9zypaIy00WI/Cr915lnCZDc0O62ev+zQfWfGGN6wZ6fEfuPRDjts33bTXd1tz0+bC+2C2M7866Fj86UOdkfvk/P/wVvv7+fmu7N37xZH2pyuv33X31I5PXPmVyPv74O+f7fsza8SFe7QFIy0AoBgEFgCgkVELmDe/5e2O2ytXrgrcfqTCzl1Ma14wi4iccea50mqNdqZefY/CisTJKy+7b1ZkaqQn1CAcisLctLljbNt6QETe4fVzNWBQj7uwIlAtVo1tW0OvNhNn31mYarfsNvf7xLPN6nHj/j0Manfc/vDaf5kEhRVxQgqV+ji/8OKU225ou9e3ILQAgPwZe/Z8g5V7ANTGb377rwr74D5qoaF+UA4aohx135OTF8nshrZvf0y1W/4hhNf9fmtcZLT2RRp9EFbIefV51H279+9b6AQFPXFCoAIDoyijdLy2cRxjfvvesDHx6ymyuEw6jWBq987g42tmuuPblyHPX7Zi2y+sSBpUBPELLrwW5Sy6H2/6tf9Hi8tEA0AeCCwA1EqRgYVItCKiiMLOt01xi+mgNqZcSKc9rzysUPTr3yhBUmCBE2WRzah9V+BojLBj2/3zOEVfkve66KIy6zaH9eco/a0L92v4xpvek2mhXpbQgsACQJ0QWAColaIDC5ERCo2AMCDNsMKrTbpKM7QIDCz6IUDcotz98zpQ+8Crb+L2xyjvcSlHWCTsH7+/I2U9/vIOKyx+oYV7TQsCCwDIB2tYAEDO1DnuUba1uc6cZ7VyfVkLnFGpoY9fH1j3R+n7uvZjmkY9xotYc6CMbdZNUWGFSG99C6/Qwr0QJ+8TAOSjmdkK5wAAX1FCi7APw3GCj6rKog+iFCH0ffbS6t88C8sytll3592+v/3R8zbm+px/9ul98p/ev27ofq+rhxSBz+4A6qRcFzUHADikXdSUsUhKs81p7auM/aiTtMOgPMKlMrZZR+7X/dFPfLaQdvzZp/eFblPX9wgA8kRgAQAlN9VujVwgp7GPIqXVB2mpayET5XXPduYDt8uq77J8T4pqc9T+Lqvzbt9f6FoNXqGFdUlVAEA+WMMCAAoQtdCIU0QnnaZQ5qAiLXkuBFlFSfrDPr5di8lOubdLeUFZ3SW9rGmQsi7AWdToijiYvgMA2SKwAIAcjVRohFzWNJPLWSa5TKnfYwq63GZkEfo3zvsXuUiM+76Gbe/3uIy4+8TYttVu35xy/9TkpP392tPP7H3zgIhY3/tri4j89//2n+WMM8+z75ybm/Pc2Ny02fd1Z1Fchh0Tan+o3vvei2Xv3lvt23afROwPEZGrd39ajn/5/2n/QO0TY7D9Q+amzQ2rrToX1zoGgV7rWZx3+/62+zKnAIBsEFgAQEGMbVt3iMgfu8uufqGxx9y0+fXWfbOd+aEzzw4exbRfoSTiLOoSFzFbtrdjFdNe22csoA8OmZs2P2PdCO1fkbtmO/Mv9dq3+v5ZRWIq/WspoN+SCDreUtl/wwjfqN+OoNAiT1n3SSNan7zE2LY1MMjR0d+dt1HbqRePLTxSdBMAoDYILAAgJ2qg0C9k/ti9zeTgLPQFax94wPnD4DOvbRGRq3Z+Sk54xf9l37l+/dmya9fVQxtbhVTkIsarYN6yve1bTMfdPgUe/TtkbOywHHPMS0VEVsjunSvWqn0a3L92eHRg/x32nU88/lM5PD8+tLG7fyOFFn59FmU79/YlCDjiahjRl93SKbTIkmFEC3EwGr+rhgAAskdgAQA5y/Ksa8QzrkN0HyoeR1D/NlIu8MIuL1iXwjkPcYvzvI5nv+eZ+/3LMh8hYMQIcQAAKCP+pQOAColb1GU9ZN0Wdd2FjKV9RjossMhVhUdXiCQP4+Iav2JHW/3K5UkTyqtPMHzFEPUKJjquvQEAVdHU6sMWAGAkuZ1xDVpY05r64ffzAqXdP/wbmp88ju0Vn9A7oHCr0pQQd9HP75Y/+gZAnTAlBAAqJLMzrpoGEHGl3T/dboqFwyijUDQZwZKlPIrz+QWPO7c82JaZ47U8zqsUWAAA4IXAAgAqJNcCJmiRyKSX4sxY+lNCuo7rR2YiTihUsgApjjymPzz/wjr51CsesPvwD3/6o8zCijSOxUaDmb0AgGrjXzoAqJDMAgt3IRy3MLa2Lzi40HoNi5npjqNf3bdrLpfpTq5w4vBHLsms/9MIGxhhAQCoOgILAKiQOJd+jK0CxXPaZ6QzmUseN9yp+GKblrwWmPzAO86wv0b0dNAP07hiTZUCi6pcpQgAkC4CCwCoECProk6TkRK6SHUNCy/0sy1OcW5u2tyZ7cyL11fa/J7H3LT52aDHGSmEZ2lfphfRfems0+2AkLAFALLDGhYAUCFxz7hOXnnZd2ZFjkn0ZFu2t6t+Vj+MaXaz2bF1tZUwGo2uMDdt7gRdJndubs7+/sAbX/XD2c78kSLOYi8oUDCOe1Vb3UfZXXnldkefXP/yl/u+h359dHhhIlKfmJs2F358AACQBIEFAGhkzZrXSquV/Mzrm9/ydsft+fnggnq2Mx8/rIhSTBd4VZGgwvnQs4ty9ro1I+3/DW8YPH5+vit7934xsC2Jn0i9RKwGgYSfqXbLLqLdr9ev0J4VOdK+oRwrUx77n92wseO1b12or98tSZundu8M/t3q94d7/1GDHwAAyoTAAgByZhUZXkW1WvwOFX9BhczMdEctUoLOdIuITE5eJLMb2smHNPsV00FhRsZFt7tw9uuDm27aa2/jeHy8/r1URG4MaM63zU2bj1XbVmVBRXvY4/JUhvdhdsPGTtCxmLSvrceWxRtv3dX5+vqLtZwStbp5bPhGAIBUGNdffzDjCbgAoI+3fe+vCz1LO1KhETaqwVVUOx4b8PxlKmLC+PVvpD5I2L9hqtS/Ydz949fvQX2S5eiALN+LrNodta+CjvEyHYNq2w+eu0GrwOJDHzhXRES+ec7bfEcS5eGGV1+oVb8AQJYYYQEAObI+2EYtbhwfhCOMUIh79rVMhUwUcftXfQz9O7oo/RPWJ6OMIBjleXU0apvL+Jp1ZYUVbvQxAGSLwAIACpDlh9w0isayixpcJOmHqvedDtIOLfJ4z8rYZt2d+uXdHd1GWbhHVwAAssVlTQGggih2UHZpHMNT7VauvwtpPV+df3/dr/3UL+/WNiCo8/sEAHlhhAUAVBBXCSgxdS0Nv2kqQettaHxFkbiSTPFxP7YIdVkYsy781q4AAGSPERYAgEoqXWhjXXUl7L4o+9FYHu+LDkW/DtONSvc70KfjKIuiF9oEgLpihAUA5Cirs65x92ttX8UP3XH6Ik4/ZHrG3G9URYQrlyRqVAZ06vfZznzhx3aW7c6qr3XiHqVS1HoWH/rAuVzGFAAKRGABADkZ5WznbGdepnbv9PywPrthY+KiNXZhZxXQUQvlKNMbUpS0j+2izquPE17OVN13YB8H9VFQn5U0rPB6XCH9rim73V5h1Qh9Utb+UOUdWlhhxZfOOp3RFQBQEOP66w+aRTcCAPLytu/9dSFFnlpkGNu2Dn3gnpycdNze+dH3xX6OjZd/xnF7/fqzZdeuq/02v8/ctHlKJMEIAFXcNRYyLLLD+lgk/X4O6mNz02b7tUYKLOKGQJoEFlH6XWT0vncf33Nzc57bRe73DEXpk/PPP0/uuedbjvtGPR517pOkvAKavEILr6koOvTfDa++UOtpXwCQJtawAIAcBRV0OXut9U3oGVv3CICwKQte27sflyFd+lhtRyZrCVjrW6hfBapNv4eIGuDkSZd2JOEVEOSxpoWuYQUA1E3TNBlgAQB1ZGzb2rbOvPoVdtZQ/aFpJwHTUKasbyIEFGVdFDAqtY9zsWV7W5eRF0XKvd89TO3u/HBuTkobFOjE66orp355d+fIF62WL57yptT7eO1tV2kdVvDZHUCdsIYFACA1asCR9kKhlZYkZPB6jDXSgtCicHNzV51VdBuqxCu0eObJx2TtbVd1DpxzUSqhhVdQYT03AKAYBBYAUGNR11aI+4F9aBFFVwHtLjzSLAi8Z/FrLk7IQBiBmrL+Trj/fqhBQ9zwwi+kcD8nAKAYBBYAgOwp4YdabFAMAIjLa7SFJSyAiPMcAIDiEVgAADKhrnthTxUhrACQAr/RFmntFwCgB64SAgBIn2saiRVeWMEFRYGHgq/yAZTRVLtlfxW5DwBANhhhAQA1FnR2cirCNn6PsW97DN32KgrSPEtqpLannMxMd+ywwr2WhTKVJvA+9X6gpqL+bSGYAIDyILAAAA3t+cp+McQQwxARw5Def3q37fv7/zX6P99YaIuTK/JqIXu+sr/ff86+dPe5SMb97A4tomzrt11JFuXc85U7Hcezo+/V+8UQMcp3fE9OXiRzc1fFekzU41G9r2z9kjfCCQAoNwILANDA3NycnH/+eYM7GsvkoZ/8JNY+po5aKS858UT79urVRwduP3nlZffPikyI+Hyo7xfGU7t3RrqCRZLgIc01LaI8/5o1r3Hcfuj+n8d+Hvc+gpibNkcPD6w+VoMIv35XAw6vfWhI7be4x7b78SIie/d+yXfbWP2ekdkN7Y6xTQLDp1H75CUnnujYR1CfAABQRsbnPnenWXQjACAvb//+tYUUMmoxbWzbGnno/uTkRTK7oT1YvNJV1Cfdr4jcZ27abM/g8A0LgorniNMVZjvzzsucun4W+PwxpNHHYUPK09xvVSTtHzVUSLXfr7zsH2Y786v89psH3fokbL8ol+v+zTuZ/gWgNggsANRKUYGFiP8IgKAQwrGdWvSr2ytX40gitICJMkXBaos7nHCZ3bDRuRhnioGFur+kPNvuuhTr0GM8Xk/QNlWUd79H6XP3dnlK5Xjx+L3L/HcdpUBgAaBOCCwA1EqRgYVItAXgkiwSl7RgjFXAuAsoj+kHdgDhUYDaVwrJMLBQ9xlX0j4OK0DrUiTm2e9lCImyOl5y+V2H1ggsANQJa1gAQI6soiFq0RG1yMilGImzPoLHtI+8ZNUXUc/qZ90OXWXd72Xr86yOF51eIwAAWWsU3QAAqKMoRQeFib7C3hveu/RVuU+r/NoAABgFgQUAAAAAANAOgQUAACnLexoMAABAFbGGBQDkLMtiNu21Mcoqy36Iuu/Zznzl+xkAACBLBBYAkJO4QYXjChpBlxbtL3AZZ/+Rr84R45Kmfo+fkhiXY7Sez+eSllECgMT9EOG1JnkPM+tjv8fFWRw1DSkcI1G3m/K6f8RLfWaq/9o82z1qv4T1e5znAgBAU03T5KqmAJA1d6FrbNtqFxtzrm0NETE3bXZcZcOz4PHZv7pvL0P79imo1ed1Bw72ZUu3bG+nUlC5tvcLBsKClpH6IWhjV1hhbNt6qYjcKOJ8/4zBt0+YmzY/Z+87ykgLdz9a/eHVx2rfWj8L2j4Pcdrv3iaMemxs2NhRA6ap3TvbkQOxgqjtc/zujNLutIIglA6f3QHUCSMsACBHfkX039xyvVwy/QH79toHHnBud/qZQbtti4gc2H+Hcpcp69evk127rvZtg1Wwx7nkorXt7IaNHbvw8jJCWBH23O7vvfj181jjsBxz7Et7N3bvbK9V+zVCH4vY/XyjiMiTj/9UXpgf99r+KGPbVkcfx54eMjPd8ewXv0LUb/uihLUnQVsdwYSy/zKEFjYlYPJtt07vIwAABWLRTQDQgNEwwjfSwFS7FTwiY/fOdmCQ4d6fz/ZT7dYh93MFPbcqaGRFI+V+7oac6Qwb5VF57tEflrQK8qqNHtiyvZ1K3zC6AgBQEYywAICMRRnB0DDyz49HWRBSfazn6/MrVAO4Rm2siPLcXtxTbFSGkW5gwdDsEY06KqT/2NKMrohKt9EyAAAUhMACADSg8wiLiXFDTHMwJeLwRy7xLQ6twjFqGBJWaI5fsSPS80ZlpBwMEViECJq+Eke/gI8zekdruiyYCgCA5ggsAEADRYywiOYcGRsTWVwUsWtz1wKIWT3zik/uaFvPLdILL0YNLdIOhlINLJKs+6FTgZvliICSjzbwC1oy+f1hOggAoEIILABAA2mvrZCWY4/eJxPjIofne8HBn7Rf2fnkCa+SS+//UebF8kR/kIZp9p43jX02Up4S0u12HZcGSZ1XH6vTBcpQyKd4nAyN4CnD6/dDoAAAQChdT+kBQK0YDT3/HD/y+DoZb4lMjA9CgzzCChGRpUsNmWilF1aIaL6Gxcx0x9GvQX2sY7Hrbr91X9bPKf4jGHQxu2FjZ+gKJ1lgdAUAoGL0/IQMADWT9pn/9Nwmq44cs0c72HI4s/3Qxe/tLFky6JdL3xl42dFISrGGRdQFS62AQP3SQVbt0OX1paHMI0MAAMhRkwXDAKB4uo6wEBH5p/sXPIvFKFc/GdXPNr431SI17VzI7JoiY+nu0yHOOhU6FcHWtBXd1tkomOtKOOlidEVt8NkdQJ3o+wkZACoiyhUzihhhMduZD/3y5BqGP9VujXSJVB++aUiiNmekm1XhMErRqVvBmlaQ4rWfMl7WNMElfwEAqCsW3QQADZxx5npZs+Y10molz5Hf8IaTHbfn57ujNmuIHQj0zxRP7d5pn0Gfard8izDHWWWloPY927xl+/Hu7aOGEeamzR1j21bP/R56dlHOXney148iU/t5fr4re/d+KbAtiZ8obJSCV1/rFFaoi4O6BYQP9mM96L5WRVxTu3e2HWFLWL+I6PUeAwCQMQILAMiRVcAa27a+WFx/g63Cd3LyIpnd0HYUJYGF2sx0Ry3mp3Z3fmlu7iq/IRvPmJs2H3Ls22d0hLrPvEcu+LXDEtZmc9PmztTuztTc3FVDCdBNN31BROSQuWnzM459hhTD7rP4fqGI9fxR2puYXmHFW0TkZs+fJJ0a4t4+IPwo1egKS1CYkwTTQQAAFWVcc83fMhEOQG288wfXFfaBPkrh7btNUHHjCiziiFJIu/cd9BhrW3WboMd7be/3uCjtHakfIixyGdamJG1GdGHHl6597dfGoOMf8HPtSW+v1EgjAAjCCAsAyIlVlEQtqh1FTIFnTosqpnJ/3gh9PNVuxQpFKEQBAACSY9FNAMhZlCI2r0K3yKkeOokbQuj0HgIAAFQVgQUAlFgaV8aoQmihWz8QVgAAAIyOwAIASirNArvMoQX9AAAAUE1NM6tryAMAPKVRFGdRWM925ks3MqCofgh73jL2JYrD8YI4+OwOoE5YdBMAchS1wB66eoDrChZT6rYpXtaxzoVT2KVjReIFJLGuAOF3hZIoi63GuaSl+3m4DGah1EVc6/y7BwCAH6aEAEBOkowGYIqCv1z7Zsv2dtLnG6mdW7a3Qy+3GmdfUe5D6oKCiLDL4kbGewkAqCBGWABADtRCxNi21S4s5vr/veXz18n0+y61R06sPf3MwYMfEBH19rC2iMiB/Xcod5kyN/ew7wPMTZt9z6w7zvQGFUERz+hPSYRRIF7PM8LZf7WPVWONF+SYY19m33b0c3Afi3j085NPPCRzhwcFp+F6QFA/D/F6vWFFaJIiVX0eKxBJa6RFkvcxbISIss8pjx9b96U50igLQyN4lNfrO9Ii7nuT5nsJAIAGCCwAIEd+hbTRcJe6o7v44nfLrl1X+7YjVjHtJaw4ilBMB07DSFh8+fWxiIhhpNvPUeeSJx7uPzPd8Q0V4oQVcaaNJOXXnroX0UH9ImK/J0OhRf93I8qoC3tbzUMbN6bAAADCEFgAQMaiFBwNQ/MZen5n//2K0bhn/uPuPyEj5X4OCyxSCYa8pDX83wpERqXuwytYGeU4UR7nWBdEeay2hbpHv9ivwSOss0KLwCCvQli3AwAQhsACADTQyGCERZg4hcL4FTvaIiKHP3JJaGEYp9iyCk3/tpwj41fsax+eXycyc7zjuf0eM+d5b0/aI1nMbsar9UeZkpNW4JBGMOS1jzQCrYDHaxtWqDymf/gd++7fnzi/p2Uq/llsFAAQhean9ACgHtI+85+mpUsGRb4VXPhxFFsjF8DnyMTEvt7ztvaFPncUjZSnhHTNbqr7cwgataDTFItRppskeEy6x1gxfBfaTBLkePV/mou1ZsTdB+4vAABEGGEBAFooYoRFFEe/yJBWS8QwRBYXRa447pWdT157h1z6Tu8FKsNHTET3opX7pDkmsigif9J+ZSqFaVFrWEQyyqVNyybNRT51HWEREuR4LrTpDh0qTu0Dt1iXBQYAVFYz1Q9bAIBEjIaeIywef3KdHHP0PhlriPzR0b3Q4NL7T2iLbM/2ibdsb0/s2CGGIfLfjkonrBDJaA2LLLOmKoYVKZvavbNdimkhHtyhheNn/f+GjTbw2i7qY4swNAXGI5BQ282UkWF8dgdQJ3p+QgaAmkl7qkJ6bpPlyxoyMe68z5ZFQd0/szz36DrX844u7ZEsqa5hMTPdsb/ga3bDxqF+KvMilaMU42W8Okikq560W/7TZgAAtcKUEADQQEPTERYiIg88tCgi54iItO2wIqui2rFuw/Gd2fdeIrLlwbZ7wc2k0p4S0jW7MpbqHl2yviRoHpc7zVJaVzkpmFWcJy3M/QIbXUefeI6a2PJg/1gc/K5PtVvmbGde1zQXAJADAgsA0EDahXQUQcXRUDFhFRFbpFdUZFFI+y0y6RNW+LU/z57MbGh2RQpxxOM12mLU6RBTu3dmG3rF5PV7O37FjrZcYd9sK1cjIqwAgJrT95QeAFRElIIj7TUsMpvinMvICn2KqzBhgYW5aXPy15LmZUu99kUgkq0037+g5/D6cv9ccx97iXOdmjSuCAQAqAZGWABAjsxNmzvGtq1DH8bPOONcmZubs2/fcN21jmI3ynzu2Q0bRd33rl1XB7Yjbttt1tn/lEZZpH2ZSr8+FhE59OyiHHp20M/Xv/zlgc/n1e9qP7fGXxTYDq/9JOLua68i2H2fX19G3S6qsOMh62ktKGoz6E4AACAASURBVLctD7blWul87CWv7Hz4oR8TVAAAHAgsACAH6tUAggpZrzDCPT99amiLwaJ71r79CuSoC95FNmIxmnZYYQnrBxGPqzKELdyorAXgt//UFwe0woC4feO1vfuMf4YLpg5NaRnlOFH3o67HoNxvHf/aXVFCDXOs2yKlHVGUiZnjOyL3O+5SpoQAAGrO+Oxnv8a1kQDUxoX/eEOhH4SHiuSQgjdJ8BCnSA99fFBx6/WzKMPfR9neJfSSjyP0RZS+jxQ46VRAZynovXS/h2keJ/3tgt6Xwvm1f9R+CXu+BGGI3+9FWn3q9z598to75MMP/bjtDius7bV7Twv01//H2xiJAqA2CCwA1ErRgYXF70N41A/nWQUWoxYFs535wJEKsxs2djwDkSAFBBZR+z/p+1d5YSMqwt73hNNZtA4tRKIFCXGCnxRFHR2URr8m+Tun5ftZEAILAHViXH317QQWAGrjt//pxkoEFuq2blkV6VF4tT9o1EgaBX4W4Q2Bhd6ijnLhfYgmrZFfaT2fextt38eC1mf57C+/lcACQG2whgUAlFDqayUAJaKuCeNet8L9M+s+eIsSDFj3p/V3R32PwvYb+70bZYRKnKk0XGUHAHJBYAEAJZNVWKHdgoUFoi/0FzW0sH6OmLY82C/ejx8q3tP4/YgSgqQaVlg/r/sipwBQMgQWAJCjqIUTZ4ajybIQ9SrKcnv/ggqrtBZmrIA4oQWCqX03fsWOtlxh37QXwsyiTzP5Gxe0SLAfRkwAgJYILAAgJ0k+6DsK3/4HavWyprPqZR5TEHjmNGTBQ79tpyT9dopkE1Z4Lhg6M91J+lyxzkS7+3eUS1/W6ExyWGiBeD557R3ysZe8svPhh36sXJb2wbbXSItSUS8xG/dKRW5ZXhoYAOBAYAEAOVALXmPbVvsD8pxrO0P53ty02f4wPNuZdwQVXoxtW/9JRM5079O9f3W/kfh9oPcpir2Kfuu+LIILP8a2re2wvhBx9fOGjR13+91hRdz3L1Jo4epjr3bYos7Dr5Gg0ALJDIUWVWcFGknVKCQEgDwRWABAjtRiVzU5OWl/v/Oj7+t9MzXu3Na6X9XfZuPlnxERsbdfv/5sERHZtetq3zb4BReOgi/oLL/H2Uq7yFbuC7vUaRai9LNIv6/D+tn1843KPtavP9uzj602xAotxBnoWN/H6rsan/kltEjHpe88Uz557R3OO8s+ukLEP8hL83eF0AIAUkdgAQAZq8Q8eq8P4TE+mFsjBqZ278z8A71fWFGEsNBCDXP8Rp/YwQUFeCivK4QgOusYU0MLa/0KkRL36SjTq/z2RTABALkgsACAnOhUSIvEKIA1/WDu1/6gaSBFS3JFhMijBiikRITFNtNy6TvPlEvlzHIeS3mMpgAA5KJpmmbRbQAA6Cil+dzqlIbZDRs7jBSIhwI8viiXzMSwfig2K861fYf6UfvfYSuYyDLEi7m2T5r47A6gThhhAQBIjWOxSI+FJAtpVMEiFXf9Amf8ih12n6lD8S2+oywYXeFJ+8JaI8pInsD1fUvVp35XBgEAlAaBBQAgNY4FIl1nOad272zXNbSIYsUndrSNhojZ7d0ev2JH2wotGGWBrEU5xkoVVrilFVr47YPQEAAyQWABAEifepUQ5WoXeSy6WUpbtrdbV+6Qxa7I5e1X0j8oRKkDCT+jXq4UAFCoRtENAACgymY784FflolxkcunEoQVnNkFgrnXtAAAlAaBBQDk546iGxALH/JzNfte55oVl95/gtrvz+TcHKCa3H/PrDUu1PvV+/j7BwCFYkoIAOTE3LT5l41tW71/Zi6KYfQy5Ju+88/y7bu/GWvfF/3xJ6Ux1hLDMCI/JsklNnXi1/6gHuh256XRGPzTN7P92tjPe/GWT4vRGIv9OHef2u2fmf6ZbNl+nGzZ3r5UlFESM2IPZZ/dsNF7p4yuAAZ60z8mfH+WdJ/RdGVmejbRcwAAfBl/9Vdf5dpIAGrj3T/aU0hhZxWnxratsc7WmZs2R2pv3P1OTl70zOyG9iG/n9vFtfvsoteoC/UDvcf9s515ezFO92VNrX5JEpAEBS669LO6X9/AwvpZwJlcex0Qdz8RWAC1c/WrLmDUB4DaILAAUCtFBxZevAp4z+3UK3BY22dw1Q3fotiLq1BWwwkveQUWKr99ez0+qz6O2oag5/e9nClhBVArBBYA6qRpmuQVAJC1US9LWegUjbBRFS6zGzZ23IV3WS5n6tV2q++Tvn9B7537uPDrJ999EFYAtcNndwB1whoWAJCTJIWvo1BVplhkJTAYiVMcq5c1zai9o4ZAftTQQO2PuM8XNWQKOy7KsJ4IoIMsfj+T7J/fWQBID4EFAOQsSuHLB95osgotrH1HuS/L50PNBK1JEuVnqpqNvon7d8CejhYwhU1ERGamO4n3ze80AIyMwAIACjBKoZ1VkV7WD9dZ9EdZ+wI15LfGTI0WZFV//6MsjOtYZDekf9x/W8L2r+57tjPP3xIAGBGBBQCU0KjrKnjtq8zSDC2q0B+oIXfhHbRYboVEDSvOP/9Ncs899/Vu7N7ZNs0FOe2Ms0UeiPd8ByYn7e//3z/dKu+60HnJYasNUa88BAAI1ii6AQCA5KbaLW0K7CzX1ohilL6wHqtLXwKRzUx3PEcJeC2Wm6Yt29ux9h132wj7L/pvTpfFLwEgc4ywAIAKiHPpziyoz1N00R93sUsAMRaUdK/50A8Vgq4EZD0mynN47T/KVYamdnfac3Ohu0+V2SWwAICsEVgAQM2lGWoQAgCaiLGGRZKwwgoRrPumdu+MFCwk2X8a+85C1+wW3QQAqDwCCwBAKrzCiqKHbAMIFnl0lCsAsbdVAhHPxyvTOiIHmjPTHfe2U7t3tnVbQLTbJbAAgKw1TebfAUDu8ijk8wwLCCsAjUQcXZHpVC51/YmZ6U7oGhZ+bY7y2IIUNSWEz+4A6oQRFgCQs7zDiiKmaRBWAAXRIaxQaTYqIk2MsACA7BFYAECO3IV8FoWCTmFFmpcbBRAipbBi6O+UtWhmnHUkXNtOeezX/XOv5w77mXubPHGVEADIHpc1BYCchIUVaRT2uoUVRbUDqJ2MwoqqSmNahckICwDIHCMsACAHccKKpAV+0D7yLkIIKYAcRbi0qFtYWOH181F/r6M8PmiboDbPbmh3jG0Sea2LNMIGpoQAQPYILAAgY4QVAGLZst15RYygRSfzCCs0Xvgy6rSzvXu/KHNzc/Ztc9PmzvUvf7m9Dz/qvo1tW9vqPn739z7o+Rhz0+bKrtsBAHkjsACADOkWVhAmABpTgwGvgMA93UO9ZGh/nQnf/QaIdWlTjRfRTBIUTLVbwYGQEgSp+1f7qS7TaACgCKxhAQAZIawAENvMdMfz0p6u+yIXybpcLSSM1c4EIzmStnvUKSpZPhYA0MMICwDIAGEFUHFhhfWoIxECHj9Yt2FjZ5Tf7Vh/h6zRH16jLCIu+JlIxH1b7Y8a5Dheb5b7BgCMpJnGKskAAH+EFUAFBa3rkOG0ibT/fiTaT5RREF7buO/zGklihSIJFfn3Lq/n5rM7gDphhAUApCxqmJDGh1vCCgRSC7+wIjqsmAyQZA5/lGMzq/1mKmCdiTRMZbmPsPfcb9pGmgGNOwjSeM0MAED2CCwAICdZzxUnrIAt6Ox21II64gKLSRccnO3M+y94ODPdGXm/eYhz9YwRC+8srgRk7yduqBLltYzyegkpAAB9BBYAkLM8iqlYz5HD5Qr9zugO3U+hMjq/s9NhQ/S9tg0JLdyXfIzaROtqC7OdeZny2H8q+y0itIhw/F7wg0faIiL777wz44aFO/2002TPScdW7ncuSoCTVWhMUAwA6TJ27bqNiXAAamPDP38+8w/nfmdCrfun2i27aMnTd773PfnJ289yvP682+Fug9onul8ysTTSWgBxEGY8KDPTnlWY9f4FhQqTk5OO2zs/+r7YTdl4+Wcct+fm5ny3tUILHQtH6/ftjv375czTTy+4NSJ3Hjggp61dK59e+aJIx4qOfWoZeZSJiGeA57ffsMuaZtlXu1/x5tz//QCAojDCAgByVkRYISLyq69+tZx43e1t9XaRbXCHJ0hBmldrGIwcOF5EAkdB6EjX9t1+xx1y1plnFt0MERE5be3aWNsXNXIhzCjvte/UpC3b27MbNib+PWK0BQCkg8ACAHL0/qefLPTM2K+++tXyne99r5Cwwt2GE6+7vX3w1NMILXSV5aUqoZWwwjpOIBC3UI8ygiGqqd2d9tzcVb4/P//8N8nXv35AxFwQkUVZXFyQp37vv3T8piaprFFERx21SkQW5bC5KCIL8sSTh8VwbVvI1CQAqCgCCwComSLDCrUNX7n9djn14J2EFtBanDU0RETe+zsXy7ve9TY599xz5MiVzukwe0Rk1apVaTZvZHtuvllExPUaF+Sbdx+Qlx1/kojIUEHuxyrUowgLQRzTxSLuJyysEBEZH1/muP/aqfHea+96PGhqfPD9//zvIjI8PUlkeHqSsW1rO05fAAD8EVgAAArzyCOPyC/fdGP7mT94Jx/udZLDQqxZSfuMtt9qGe61OVTNZlPGxsZSbUfeFhcX5cUvPkYMY/h1BK0hEkXYFY3Un0cd3dEbXTFSswAAGmqaJmtuAgCAPr8rhyCysbGxkQKLPdd+Si545wdSbFE8pmnKwsJi5s/jFy5Z9+u6DknR+OwOoE4YYQEAAHoIK1LRbCYLLPZc+6mh74sILszuoiwuZhNY+IYQWx7sr5lyvH3csf4DAIDAAgAAVCasCFr7IMkZe7/1G/ymRfz/f7FLREQef+I5EXnO8bPf/93f9X0eNazI0wVveYtc+ed/PnT/r5z0Gnn44Ucze171/fnENV+Tj1zxE+tm+/BHLint8QcASBeBBQAAVbNleztW6FCRsELldYWGqXYrdmiR8uKJsdcGyWN6yOSVl4W+xqynZ1xx3Imdj/zsJ20RkfErdhBaAABEhMACAFBmfpfeDFo0MkpBXtZLes5Md+y2u0OLKH0V4/UmKf5FRO785rfEMAwRQ8QQQwzlv2LdNkQMw7C/NsZ+lp60Qouqy6s/PJ9ny4NtuUZ8j7vIi24mbhUAQGcEFgCQk5+df3T78hXBJ1j/87bPO25PrHxlZu35yG+fKCtXLAluz+WD9kysyq4tuQobfVDiK2SIyHBoEcT9c6/tI4QY5qbNHb/Lf7qnTnzsmr2OUQthUzeMbVvbUa9K4TUaoiyhxQXv/IDntJAiF99MKlbfzhzfEflnx12MrgAAWAgsACBHTx963jMk8Jsn/8LTPx66L80QI057XnjK2ZZSBBhexfaW7W3f0KLsYYVFDS3c92fEL4QILV692rlho72vpFMy1FBi1NDCL4yJLWANC5Hh0CKvsCKN1zfK1JkPvuvXZemf7mhPjIsc+mCysGJ2Q7tjbIs/5QYAoDcCCwDI2avO+vdD9/349q9Gfrw7xBg1wEjaHjXAKEV4EaYqYYUlSjgxYoAx6kiFqXbLM1xJZb8SLbQIM/f7l3keF5OTk57bn/8b6+W33/12Ofecc2T5imMdP9tz882yatWqwOfLe0TFnptv9rh3Qe76xp3yutefLoYxfLUTrxEvxrat7ShrYfh57kPDQYV6DPi9V3GPky/fepO0WuMyPt6SVqsl62cPd7z27x7lIyJy/vlvkmNOuV7Gx1syPj4urVZLXvmqfxvr+QEA8RBYAADgXsehauFFhqxCL/JaA16Fp0dwEmuUht9+JTy0yEJzrJnosqY6WVxcKPT5o4QV1s+sbYOmJu3d+8Wh+4JGhXjt12sfXlJeqBUAaq1pmmbRbQAAoFhlW1xTQ1FGRSQNC0YNGfIOLZrNsVIHFt3uoiwsLObyXGkcM+5wIW4bptotzxFWUzPTHb/9Bo3I8NsmLXx2B1AnjLAAANQHIydqyx1aROW3vkyQsbExaTSSPFIPZndRFhcXxeya4jEjxFdQv4Ytrhr1MUHbJplGZD+HT2g58n4BACMhsAAAVJdfQMGIilpKUnz6nbGf9dl+x+opkT1flkf3fHnoZ+9/+kntArML3vIW+fTKFw29xpNE5OFrbknlOcLCirSK+6xCgjjTkwgqACBdBBYAkLP7Pv8Fz/vDLjGaFd3akyqCidxECQJGmY4xyjoWXtvodlnTqsorrAAAVBOBBQDkKGiQ+NOHns+tHRbd2oMRhU15CQpwEl4GNW7h7wgtgtrbf+44+7e2jbvuAbJBWAEAGBWBBQDk5Li9j3fcQ8J/dv+3Ax9zzNHLM2vPFZ/9ieN2WFtERI45Krv2IAdbtrc9Q4iEa3skLfijjrTIev/IDmEFACANBBYAUKDjTvg135/97P5vy6OPP+v787TDDK+2uEOMR58Ybk9hIYZVZDPtY1jSUGKEvlQvJzmn3P/3371bzl73H+3ba08/s/fNAyJife/N3t+B/XfYd5rmgjz88GO+D4p6lYioYYjfZTInJyc9tz//N9bLhRf+lpx77jmy4sgXO362R0RWrVoV6Xnzsufmm0WUvu5ZkLvvOiCnvO40MTxW3Zybmxu6T2TQ90WFFXECrrhtiLrvOKN8AADhCCwAQFNBYUad2jCEK30kMzPd8ey7hMGPWsD5FfUiIo1GI85uUxM0yiJO8exdmgdrNpulvqypiMjiYvzLmqbR30klmZokIjK1e2foNKokI30Y5QMA6SCwAACUQ8I1FhLv231/zUdyJJ2eYRjFXd6zqCs6jI2NlTqwMM2uLCwspLKvvMOKoPDM4hiFE/J77dr3m0XkHpHhIEs9yq39E1oAwP9m7/7j5Kjq/N+/e34kCBhAWU1buiTrqiurd9dd0a+uVzDJJi6Y7Irs6hXF7UQhsCAiKMaZRcQJERcEhYsBDaMo3qtfRA2CBEOMuv6Aryi4fF1/kgiWPUgUCAokM9P1/aOneqqr6/ePruru1/Px4MFMd9WpM92VZM67P+ec9EYsyyq6DwAAhIsTGMQNFwYhjAirTAkIhNIsTlkpqMIiTJ4DyZGRYQ0Pl/PnjqLRmE1UYeFWprBizZrX6I47vt/8ZnKLYVkzOvpVK5tTk6J6wxvvcE5PuuTiC3Xim9Z2HFbZtNGIOjUpCX53BzBIqLAAAKDfRJ02EyHEqNfWtQZefoPOoGkTQ12usMh829QNY6bXQNhvHYerP36NJGnP7x6X9Hjbc6efdlqivuXphOOP1xVXXtnx+JF/+WI98MCDkduxNoyZdZ/n8lxgtUgNq1F0FwCg7xFYAAAwKIIqSdzPucKMpEFAkVNCogobLGf4aXkp11/JsxogTFZBRXXSNHwypNxYDSodACBvvVuvCAAAvI2vN9sCCPf3Xse72JUV1cktRppy/qIW3YyqFz/Z7zV+r3Gvv/ZUWABA/qiwAACgX9k7g0xsNuKs0xE2kHQ/H1RD0e0Ki14fBPeroPelVxempMICAPJHYAEAwCCIGFrEDSvC9MKUkKAB89Tp58eexvGNnbfoH/7h1Vp0yOK2x6+XdOihh8buX56uv+EGqWOqyoxu/963dMSS58dqK8nUkl4NKySp0aDCAgDyRmABAEA/s6ssgp7zCDOqk1uM1jFzklQvDA1lG1hkuUNCmsHy4sWLPR9fs/pYnfSW/6entzWVpNnZWT396X+iSqXz5/BbcLSXw4ckmBICAPkjsACAAXPzLbfo2Fe/uvA+oIuiTA2ZCzWqPk0knWpRqWS7hkXUwKLIwfPI8EiPBxaWZmdnunrFtFN5/O7bPDElBADyR2ABAF10+SGHmWc88lBhOwXYQUGRoYU7rHjsnScVtkMBFF6BofbBpDMIsB+3mlt/PiHp2e4mliw9svWJvLVhzPzc0qWB3XEHDXVzWvXaOnltLepW5G4XTiMjwz0dWDQas5qZme3a9YpYdySLSh2mhABA/kayLK0EAIS7/sinmSf8+LddDy3cQUER/SCsyFnMnUDcz/kFE36PVY1RZ2hxgKRY72dr2okPe6eSufYjt92N6gq/aRFXf/waSdLvfv+4pMfbnjv9tNPy7lZsJxx/vK648sqOx59/5N/qgQcejNVWFsFD3PfOvma9ZpiVTdG3jc0msCjmd2h+dwcwSKiwAIACXH/k00x3ef6BH762a+GBHRQ4+9HN6zv7gN7mDC3icgYSXpUV3eR7vZCgxGuAHdD3wqqrgpSlMiVJ0OS6/34m6blex23d+pW2kGnxFeeb33zFc0NDOufzlU0bDWcbp/3bOzz7VJbXEwD6AYEFABTJUYr/2MTm5O3E2LLSrx+prp9MKQdviC/qQNNvIJ91WFE3p8u7AKRlafttt2nF8uVF90Q7du7UsmOOybTNIl93a8PYQYpQ5ePsY9UYle+UKElKWOXjvg4AIBkCCwAA0BVe1Rh5VVbEDS3SVIrEsWL5cm2/7TZt37Ej92uF9mXZMkm9P7CO+951I9Dq9dcUAMqCwAIAipK2KiIrZekHBk7e00DKUGlhr9NRr60z7UV3y1BdYWtNC5MG6u+CtnvDYw0XW9x7tOj7DQD6DYEFAACQ1BxcO9eVyFrQegF5VTfECS26UWVx+SGHdby+cQa5YRUqYef044A68Roqrnsjyvvfj68fAJQZgQUAdFkZPvVFnwuak+/3KXrQOSHiDhi7vcBm3NDCPidLYTuiRG6nS+cECrtXwio14lR0eF0roCIiriShBQCgewgsAKBLnL8IE1rASyafhKcIHpJIG1ZoYrPhHlDnWeURVZo/n23n5jTNotSVFq4dkDqei9OOjyxDhaDQgr+rAaBYBBYAkLGgT+j4RRhevO6X1INLrwFjxmGGe8vHKOdMqbmlZOv8kHAiarvSYG0n6f57JsrfJ5lXD8S9x5KGFV1YWyMstIiKv9MBIFsjlmUV3QcA6FtegwhCCzhFGQxFvk/CSu1DPvVOWtkQFCosXry47fv1x71ClmUZkmRZkmVZsua+seTx/ZvW6FPb72hrY2pqyrcffqFFP/5ZSxJaFCJNUOZxz+YxZcNryk51fL0Z91rdqGLhd3cAg4QKCwDIQVgoQWgBKdLgZn/dnF5gH9ut+6Q1eAv4ZDvpoPGov3phsk7BU8+EFrbx9WaZKy3c0lSllP69AIAeQGABADmJG1pgcAUMahawCGA8gzhALH1oETdo8As07Md9KoHiTB+S2qcQuauLnK9fmnYBAOkQWABAjuKEFhhMbffExG5jweg2XfTMPzfPOnF5x7G5DETj7NiA1KIulhl3Uc1C/i7p1gKv9r05d70k2++uWfMaSdIdd3x//sHJLcaW957qfULD8fVH39/6ct2FH2s7zGt6UtDUJABAPAQWAJCzKKEFoIndxqVLf2le9Mw/lyRdet1tskMLgq3el/b9s88v/d8XWQZf7rYCppNUJ03DZ2kTAEAPI7AAgC5gzQqEOfwp2zR2yJ8X1wGP7UXDSvARLuugqVR/f7gqH7pZpVOa1wAAkKuhojsAAIPC+Qs2n5bD7UkLK0V3ARnL6895af/+6NYUEQDAwKDCAgC6iIU24WYHWfevO9l83mc/Yay3lna3msHxqXhr2kGEXUJQrLSVFplWajinakxsNrhvAABZIbAAgC5jPQL4+ekb3+o50It8v9gDR79B4wAMJoNeq25OI8jjz3grSHIaX2/mte2mX7sdU4fm+pF5hcUA3K8AgGAjlmUV3QcAGDj2IIHgAnEGjZEG3M7QIkc9GbzFXWshyoDZbxFIdW6V6WRvlem3TqQ9Qci99aY7tHC/B3Hb9bv/Er23QYGZ1+vkfMx5vLtiA2343R3AIKHCAgAKxMJxg809Pch9P8QOK2x+n3bn9Gm1tWHMtAfKbu5tH497+/sUZ8vHyqaNhtfWkX798Hq8ozIhSnCR40DZ77WSpIMOWihpVrJmNDs7oydcW2SGhSBr1hyn22772lwbs5qZmda+/Z33jnPrzbBwwm/9ncjTSpK8lkEVG1RdAMDAqGzevJWYFsDAOOX+m/hFF6US5ZPsbgVbfgFJ0JaaaassvKY5BA3KU7Xv3tXC+ZhbnFDD4xi/1yUorJCkxYsXt32/5b2nBh3uad2FH2v7PijwCQqPAu47q25OV0KOyUXQ/Rb02q5Z8xpJ0h13fL/t8bivb9TX1n5d83h9rnrWcVSdABgYVFgAAFCgsOlBZa/CSTM1pGqMplqDIbT9ubCiXltntr2OCad5xLq2z/sWrVakexLeX60tbUq1zWoCx9b3h4ZjdhCyZs1rtO7C/PsEAJhHYAEAQAn08qAv6posfj9j3uthRH5tPYKKD193W+vrd+56tqHxJYNVpTWx2/jw0l+a7/n1LwxJ2n/uKa3KgbKtYRI0NWnr1q9Imq+IcFeWBFX62O1u3fqVwGqVOUdZG8a+FL/3AAAvBBYAACATfoPYKIFB1gPgVFuzzq2f8OGlz2k7d8HoNu0/95TO491BRx+tsfDhpb9sfw0uusqwQwtbN6sswu6TsKkYce4x57VirLvSCit6OYQEgLIgsAAwWFhxvjsSDtiSfkKfmzT3Sx8NWuNIO0Wk0E/ts3rP4u5G0gM++Mw/b1VZ9CPnuinOv2eS3JMEFQCQHQILAIV617tO7PL1unq5gbByxQpJ0q3bt2vv3r2xz48zGEi8a0ZSSQecAxyMeb2fcT6BLzy0SMJvC88o26L2iNaUkOlV0nixfen2PUIAAQDFIbAAkLuvbZv0fc4e7KI33Lp9e2ZtpR1wBO1cMbAmNj8i6UjP5yLsdlENOd4veIjyXsYJm9IOSLO6J9656+etaSHn/fYXHVMhfF/ToC05e8w7T1yuQz5ylbFwgdSwJK81PIr4M5hXaMHfJwBQLiOWxa6mAAD0Ce+wQvKfpuA3sPY53h1aJBk0ttoIGNRXlXx707o53R6+pPDOE5c3/6/lfVEpkcQjZ57iGV4VLcvQopeCCn53BzBIqLAAABQii8FG3EFG3oOs0gx6vD759woHXKFEWxWEyDeSJAAAIABJREFUY9cE93vl9Tr67c7gZi9eWDenVQ2o+nBeI27bkuarHAqeluF+rSo+xxUl6M9ElIUri77nfXeo8brffe6D1s8Qde0Rv6CtT6b/AECZEFgAAAqTdoHGOLrxiXA3d0vIhGuA5Xw/6rV1ZnVyS2vAH/ReBQUK//Wj2/X3K/+x9f0rd+2aP3ZXtG5+c/Hi1teWNaMHHtjj24+2QCRa810VtPWmJH19x00aHR3VggWjGh1doOPe/r7IO1RUNm001qw5Ts/++5tb5y9YMKqnL/4z374EtVe6RXADtPUloGqoKqULFoKm+vTRmiUAUBYEFgCAQvluhTlpXiRpb71mbPQ6J/H1Js1c1hao14xyD1QirqsQFEwkCZgqQ0Oxjs+F10Ayi508ErbhDArc97IdzbS203Q856x6sTmnzVgbxswv/+Vfq3rbVt9rR912tpfCijbOe3x8vbngoqta3++fDphKEXfNkQFYaBUAyoDAAgBQuOZ6BrvdA4aPSlJ1cv53/3rNMEs7UCq7GAMy5/oS9dq6ttc8bmgxVClwEoQzpIny8wdNm3G2GeU8ha/BEbtKyK568Wgj60olv3Z75s/f+Hrzw9fd1rYd64LRijoWTpXihRUDsNAqAJQJgQUAIFeRdvPoDCs8taojPHYqiHW9QZNyIOWe6uJ+bacCzq0UGVhI8wPMKMFDkra7vJ6BMwRJEyS5z09zTGkkqXghZACAUiOwAAB0hef6DhGDig4Tuw2v0KIMOxeUQtpBtMfAL+n6HENlmBIiRfvZk4QMAefktfWm3XaR5/cVv1ArDoIPAMhFSX6LAAD0I/dgre37pGGFz/mB10LisCLtFqaFV1j0IcKGaN6569nG+NQvjJERaXhY3tNBsq6EYf0KAMgUFRYAgK4K+6R+weg2SdJHL/9y67H166/0Pniu0iLrcGLB6La26wf2oYySfmLsU1LftntIzEoLAgsUZnyJ+djZp+R/nSwWcAUAeBqxrIAVkwEASGLuF3jntpJtCxD6VFcsXLBNH/nolyRJzn+fPvaxUyVJp576MY9r7Tbk2KHDaycFSVLIAoiStGDBNn3kI1/SRz56qtz/Pn7sY6d6X7/M4iwEGDLococWTkGRRGmmhBQgryqfnts+t58VEFbwuzuAQUKFBQCgFA580jaNDM9/f/P/HPc4aiJRaBC2W4MkPemAZliRx/ULZYcWQdstRhx0JdrWNOsKix4Zq+U9JckZWiS5FovTZoDKCgDIHYEFACCxvXtvcnx3lqRv+R5bnfzXwE/6H3v8PZL2ybr/Pv3kx/fpN883dNd/t48DmiFCcGgQJZzwMjrqF1K068lKC5tXaBFz0BV3kDw0lG1g0Ujy6XKSRUjjDkZd16gq+b3ox6t6KO01+rJaIyicy/IaEmEFAOSMwAIAEFt7UJGVYUkHqvKsv9Dzn/UX+sCqlQHHjrV9V51UyhX692vvb96qh3fdpzvv2qXLPrkzXXNl4zc1xPlY0NQRj0GZs9rC2jBmVjZt9Dx/ydK/1NTU/Mann1u61HNbTjdnIDI1NRXp/bU2jHW2HfRzZTWw9bhGUJBgv1aB28HO/d/5M4WFE0nb7RthU6Cyfr8JKwAgdwQWAABIkhqyGlakT/BLW2URNGCLs56F+zwf7tAiTrNVYzQwTHBWKLjbDtu5xDOs8Kss8RLndfLZAtaPX7AjSWvWHKc77riz7bFzHzMNy7JkWc1703L+J0lz/7csS9Ypb5AsS1ds/UZbG87AyNmPvgwtbO73xf4+bWhBWAEAXUVgAQCAJFmWZFlqNHpkkQQ/QQMp93NFD7pyuL5n1YbXdbweSxLo5Oy5z16a+zX6alqIO5hzv6dRgiu/c1JUJAEAkiGwAABAkmQ1KyyyCCwGZMCSZmHJpINkv3MyHXBHrUZxftruOL4a8P4HTddARpyvf9qKCOd5Ue6LAfmzDwDdQmABAICa1RV22X2YUk4HyUmeu13EbTtWKJFkoJp0sOkexDJtoDzC3oO47xHvKQB01eBujg4AgM2ar67wq7A49p8nutyp4uW9NWccXmFFmfqn8fVm6z9bCaeYAADQS0asJNuDAQDQV+bWr7AsNRqNtmf+4YQPNI+Y+/fytNM2d713RXCGAWVc36BU/fNaG4SwAjnhd3cAg4QpIQAAzFVY2FUWv7z/Jzr9rP/ZcRhhRTmUvX8AACAbBBYAgNgWLTqu9fXKFSskSbdu3669e/c2H5z7xDl4y8ndvp9AP+Pp22RZUqMhPbBnVWBf6jUjcNvN1nFzfalOmp3XHZKGDpcWHy699mXSa09brurTXqtGQ5qdlfY8FNyHflL2MCBy/+wqh7TbWAIAgMIQWAAAuqZtgDm+xPQLLX7zQLSAICisSKv+28EJKWxhYUCZ1owoY5hiq5vTqjq+dqp0vzsAAPQsFt0EAOTGOaj0HGCOL0kcOISFFWUe0JZRX4cVXutJ2NUXJbf30Uf16B/+EOu/uPizAgAoKyosAAC5Cy7d96+08JNnZcUg6pWwIvbA2rn4ZZRwwi/YcLfpbt91TKu6orau4z61NoyZlU0bPfuydetNmpqaanvsDX9YGPlet9t1t+HF2jDWn3+G/N7nqNOCgqYQRbmHmH4EAJkisAAA5CrKINMOIDzXl/A4LotroilOWNGTr2vQjh1ZDC592vcKK2x2WBD0enqu/zK5JfA6SUKInnxP/QQFClHWMsmi4oY1UwAgUwQWAIBCOQdm3aicyPsadXO6ZwaBfR9W2KIOIJMONLs0QHWGE/b7Yf8/SRVMT7+nQdzvh7PKJo/qCee5hBUAkCkCCwBAYfKaauAODcoypaFMBiasKEjVGO3qfcd7FMA9Ncgv0MjiOgCATI1YllV0HwAAAyjvwVyRIUUvBSSEFfnJK7TgPUnAb2pQ2rDCPr+LYQW/uwMYJOwSAgDoul4a0Pczwor8Zf0a8p7kJEng0AO7zABAr2NKCACg69LMuw9qD+kQVuQji/ud9yMlv0qIrCojCqi0AIBBQGABACgMA7nyIKzIX5zXlfcghW5VPjjDCaotACAXTAkBABSuaowmGqAxqMsGYQX63vh6M9fqB7ttggsAyBQVFgCA0oizSGHY+guIj7ACfYHwAAD6BhUWAICeQ1iRPcIK9B3WkwCAnkeFBQCgFLKqrIg68M4y4GCwD5SUvZ3pxGaDAAMAeg8VFgCAQtXN6a6HFXGP7UY7AHKWdoqIHXwEtU0oAgCZGrEsq+g+AAAGlDuoqE6a35V0gufB40s6BgJ5LBZZnTR9BzX1msFgBOg1dpWFF6/H3Y+5Q4iC18bgd3cAg4QKCwBAIdrChknTmAsKvMMKSZrYbWhid2ugkDas8AhLjKCwwu8Y1s4ASiKouiGLyoewnUaorgCAzLGGBQCg69xhRayT7dAiRbVDquvPneOstqib00wNAcogbqCQJGQgmACArqHCAgDQVWnDAq9z41Q55HF9AAAAZI8KCwBA18QJC6644mRJ0umnX+17jLvSIY7qpPlZSe/K6vqlqbLwm18f5VPhhAsHxp0WE+d1yrNt9I+875M47XMPAkB2CCwAANnzGjQ7BsF+YcWC0W368KVfaHssSnAgOQKDgAG7a9DhGVbY1/P63qsPaUKTzAUtBpjTto5J1vAIfa/s42rrYve3NMERuqaM96BEcAEAWSCwAAB0Rdig4oCF2zTq+v1+2w3vc3wtrTr+/R2hQeTAYGKzobnBh19g4g4rnNdv6ry+U2kGy367GgSFFgl2PnC+p5VNGyOdb20Ym69ICQhQXNU4w1NTn1wcq+0yvA/Inbtqa2rqk6HnRL0H3aLc43bbAIBsEFgAALIXMAg4bvtO4wd6TttjBx24TQtGpQs/2Kyu6AwK1Hr89NP9xwxxByBOiw7epgs/eHLg9aVmqBEUmhS5a0h17v8dfaitM6uTWwzP5yTZz9ni/gxBA7kf3X27Vq76x9b3r9y1a/7YXdHa/6Z2aPFcXGFZM3rggT2+/WDAOJgqmzbun5ryf358/Fx94hOfan4zucV45THLml9HvAcl6TP7fq8/PeLI1vdTHhd03oMEZwCQHoEFACCxvXtvcnx3lqRvNb+cOLFjAGsPpn+gf+1o54+PjUmalbRP1v33aflz/klfvPUuffeHuzuO9QkMvlivGa8N6mvQIPyQRds0MvcvYlBY0cvqjtDC5v4+D0NDlbwv4YnBYrZ6YPvepUFPDg2lX2e+UonWBsEZAGRnxLKsovsAAECTZUkNS5Zlabbh/e+Tz79bp0tKPEAYHZZe9qIXhIYV9rUvv/xtOuOMj7c9V6bBsWdf5qZ8tD03vt5smybidUwEAR9sq1IpJrBAdnogrAg1FDFsCGyjoPDNjd/dAQwSKiwAALG1V1ZkZViqHKTKEc/XkUc8X0e+elXAsWMdj1QnFVgtUA14bs9D75IefUgP77pPd961S5d9cme0LveDHBbidMrik+2BEbRLS5QdXBLu8hKkH8IKKZuwgfANALqPwAIAAElSQ1bDUqMfPr1Ms7VpxhjkdUmCRVPDtC1oWaIKIi9BVT6SVMlkSgj3MgB0G4EFAABSczqKZanhMxXFyT0dRCrHJ9FBVSRRtmf0XbQzRNAwjkFeb+qlsCKKLCp9sphWAgCIh8ACAABJktWssPAJLFa+9vzudieFemv71vwX1QzDlJCcDXhlRVRDGQRnlZKsYQEAg4TAAgAANasrLMt7SkiEsGImj16l5bUzSLdRYdEl9gKqKYWFFWWoJPISdpdls0sI9zIAdBuBBQAA1nx1RaPRaHvKGVac++4T9NjjnYuB1mvGA/bXZfhE2msnkOrkFiPqGhZRfoaoA9ey7KzQt3JaYLOXwoooWMMCAHoTgQUAAHMVFg3HGhZ3/u971GhI37vrBM3MSg89skpnnBG0c0k5wopAzi1MU6oao5EGsJWM5/2zpWM+4oQVke5zd7VH2H0X93iPfgXJIjiLUaVRkzSR+oIAAAILAACaFRaNuQoLSzfuMKTgXVJb6jWj6ztvxOY3XcBvCoHz8QgDR2vDmFnZtNGzraw/lbYCFkW1Noy1+lr68KhEcg8rnI+576egezBGuBZ0D0rZLJgZ9V62NoxNSNyDAJCFET6pAADEtWjRca2vV65YIUm6dft27d27t/lgwECjbfAzaaaZcz9VrxmzrbZiDA46+jAkDR0uVQ+XXvuy6B1whhUlGZy8R9IHPZ/xCi1SrnvgrLJwhgVOR0iqX31d6/vPLV06f37Q+hrOe2h8fU9PR8iL+zVJustL6/yswwrnexh2n3kFGRFCiyj3oCSdJaleW9f63r4Pw9Z4ce6u88TZ56uu+ddhsYqZJsPv7gAGCRUWAICucg4w6jXDTBJauKsa0oQFWfShJGGFNL7+DEn+AzyvwV/KKSJRp4akEbf90rwfOcnj9c40rIh6nwUdH0PSezDKz5Rn2wCAcAQWAICuc4cWUvRqiyzCCvcgZC60eELSs7tx/X6T9DVwfnrt11ZHFcGAv95RXo8sXqNe29o0cR8jhCV221GCi154rQCglxBYAAAK4RUatJ5rDy/21WvGHr820lxfkjM4OUBz1QnVSfP7kv7Rq29ZXR+dgsIKXutOeb0mvO7J8FoBQPYILAAAhfH75DJsIcssBwZeJd/1mvFiBUytYGCSXlilwECuWWGvKeKz3oOzIqX1eoUtphpzukXqsCLDbVYBACCwAAAULkrJdZ4hgbPtovowSPoirIi7iGR6Z0k6R4p5H8bYbaPrlRXOgIagAwDggcACAFAaZQgEytCHXpTVzhR+7fTU+gFpBt+ucx0/t2dY4bUOSFqpXsek4UOK3Wpsce7BpLsKhR1XmnsQAPoEgQUAAEgsTTVE1RjtGKhWlXwQbvelq9UBYVIOxKspn4+jXltndn3AbYcbKV+nuPdhx73iteVvFu0CAFIhsAAAoB95DQDDPvmOuc1k6rAiJ137pNsrtOjhqQ2FDrLdr1uMACPNfVg3p1Wd3OK9ZkjadgktACC1Ecuyiu4DAADIkt9gL6hcP8Un3JVNG++UtCbWSVec3+zH+HrTb2BYNUYfnDr9/L+O06y1Yay7gYEztAgKK2IEGXHW+AgaFEcdcPsN2BNLuyZFjODM+TNWNm2M9XPY94pXZUlQu1OOrytB7eYUWvC7O4BBQoUFAAD9JGiwFxRkxOQaDPuGFYsXL5ZkSZqVrBn92TOeaT8V5ZqGtlyve+t7JDXm2pjV1AMPR+pfVz/hjjhAP+HHv40fDjyS8LkILj/ksFa/Uy846wxv3KFF1BAiYWVFWFixZs1rdMcd35fzPvqzW74c7Vq3fLn15fy9ODN3L3a+AZVNG42uB2cA0KcILAAA6Bdhg8I4IUamKpJGpMqIxmr/nLCNoeZ/le6W2UeqUghac8Px3BmPPGRI0o6dOzVU8fpsvruOOfponfHIQ8blEdYMibzoqTu0CON3jMe9ms3uMfP3Ubp7ccFceUXKxAgAEIjAAgBQKgHTAwbi+l3lHCxGXUSyh5Rxe9QdO3dKaoYFRfvGN7+po1/5yszaa1W1eC2kGRSiRTiujO8lACB/BBYAgMJFGYxEnbffi9cvTA8vENlNcddG8HXaaWo0GlqxbFkmzaVlhxVZ/Hye6zZEvb9CjovyZ2/K81EAQK8jsAAAFMa3mmHS/E9Jr5ckjS+5s25OL3afl1VoENAHexC3t14zHvU6p2+Ciz6S9Xsydfr5noP55tocndasPlYnnvgv+tS1n+147sADDs60b1lZu/akjsfed94GveSlr1SlMtzx3NRUZzyQ17oNfRkUAgAiI7AAABSiYyeE+YBAssMKSZrY/bdV53k1o/VJrpRuEBPSB9ui6qS5yH19+3wGUXAbHh7W5z//GR188NM6njv00EML6JG/62+4wePRGX3n2zu73ZUOhBUAAAILAEDXtQ1EJs3fSDoq6rnVSdPIIjRw9SFySbx9rDM4YTAFp5GREY0Md1Ym9A5Ls7OzhfYgLKxwh43FL2EKAMgDgQUAoKs8goLY8+erk6ah8SU/rJvTnR9hJ+tDbM7ghNCiPPwqb5Iu2phkIDw8MqzhhIHF9Z/9SOvrE954ZqI20mo0GpqZmZFlSXlvZhL2vkQJKwAA/WvEsqyi+wAAGEBJg4KWid0vUoLAIIuwwnk+oUU5ud+PqjGaaKDrty5D3ef4qw6vSjds054btnU8Z29r6scZVtjf5x1anHD88br+yKe1/YxDkl4lSTtubD2WR0hAWJEMv7sDGCRUWAAAuibKYOOyy9a2fX/b1g9Ikm7c0TnWSxMYBIUVzj4EXX+unYPqNeOPkS+cJ3uLyInNhufOC36PJ5A0AOimrEKLbnCHFc7H8w4tinhNQqZ8PCjpT6KcYz9mbRgzM9vNJaU8Fh8FgEFFYAEAyN7E5s6Bg2Og7BcW+IUVkrR6mRkaWvhee069ti5wIBF2/eVr/l3veMc17tMOlfRHqWRVFgGvQ+hxzsciBBz2AM1rwHjO2W/XwoULtHDhQi1cuFAn1fe3tVed3NJxjvt9ete7zjSa5zfbOemkt/n2oaOtHgot+kWc19fnz0uksMItKLTYuvUretc5Z7bdi2+euxerxmjnn4Px9abzmna77373O7Rw4UIdMHc/vunNb+3oQ1g/AQDREVgAALLnMcgNG8QsOnibLpjorGxw8gstnNeoRhhgewUmTz5omz6wMfj6Ae09Ua8ZB0Q+IU92lUUUUY4LqMpwD/69BmsXP0mqm94FKH4DOne779zzB1P6g/M6gV12f/rey6FFUetYdEOiaVyuc4LuQbd3+vUhwp8Du92zJEmPNs97QtIV53veS4QVAJANAgsAQFd5hQWHPHmbRub+RQoLCi67bK1XlUNqCxzji6A++Fz/2ZLKUwYeddpHBtND3OFAnHOC+pC6XbUPZpOGFn6f2C9evNjz+GOPXSlJuuaaazufPO003+uc8MYzfaeF5M39M65de5Ik6aabvqpKpXPx0KmpKc92Ek+FmNhtXLLkF+YG85eGJO2fXiWNL2nbvlgKDrjcx0bRai/De7CtXQBAagQWAIDE9u69yfHdWZK+1fxy4sSOQV41oJ1HHh2TNCtpn8583dv1kx/fpy/eepe++8PdkfrRMS3EQ9Cg4ymHbtN5539OUrzKCsyLGgDEHcylHfyFhRZhvIfm/kaGR/TmN79BBx1Y0ZMXPb3tuetvuEGHHnqo77l2NUU31q1w9snt5ptv1ne/843YbSV9ry5Z8ou2P7sLRrdp/7mn2G3uqZvTh+d5/ajt5nF/AwCCDRXdAQAAWixLalhqNBqabXSuhL98zb+nvkR10rzV/djIsHTRha+PHFa417pAU9hgrajBnPO63ZgKMjIyrOGRZNuaSuWYBjI7O9vV641P/dLw2UI1UljRDWW9vwGgn1FhAQCI7egXHyFJWr3Mv8Q9D3agcNtWr2fnppr8KqSRZaq5H3rpX70gZc9QdkGVFlkbHh7RyHDywKJoVqPR1cDiQ3/4pXHAQmn/tDQ7KzUa88/1ylojAIB8EFgAAGK7cceVRXchY/ulRx/Sw7vu05137dJln9xZdId6UtjgsuhdVNyhRSQ+O0/4reNw9cev0Q/u/E8NDfVuEWvDmtXMzIweeODByOdYG8bMeszr2PfCA+tPMY+YvNr442OW9jw0v36F17FFKvv9DQD9aMSyOktuAQAYPA1ZDUsNn38Xl60el/1v5llnTXazY9GF7XbgtbhgknNc4nwKHndQl/WCh0l2CIm7mOSLJD14/Vc7Hj/jkYei7d7SRSccf7wuP+Swjp/vSEmWvpTbdd3v069qJzf7MD7/WNz7Ks31s2rbPjbP4ILf3QEMEiosAACQmutnWJYaHmtnLFs97nFCDwrYojSpJCX7rdAiJCyp19bF7iufcpdflPcnyu4gXsdGlec92NY+ACAVAgsAACRJVrPCwhVYOMOK8bE36I+Preo4M2yHkq7LqZLCzTlQdE+bcE6YcK6laFcr1M1pVQOuGdS2n7a2GSyWkvt9SbtGRer7JMZ972w/7P4GAGSDwAIAADWrKyyPCosLJ96g2RlpelaeYYVTqQfJ4+vN0NAioaCB4o/u/p5Wrvqn1vev3LVr/thd0dr/5uLFra8ta0YPPLDHtx9hoUXcAXLUQXAkp3V3kdqosvoZwwbrWYcVTmE/w/j4ufrEJz7V/GZyi/HKY5Y1v454D0rSZ/b9Xn96xJGt773WMYlyDwIAoiOwAADAmq+uaFjzWxTc/qN71JiVfv+If1BRuuqKLok62Cxy8cmgPkYdSHovrSktdoQoTmtWH6s3ven1evWrV2nRIe3HXH/DDTr00EMjXbdbrr/hBo9HZ/S9735TL/0fR6tS6dztxG/B0bzXhUgji/uwUonWhjO0AACkQ2ABAMBchUXDUWFx4w5DUvAHz86wovSfpIZVV3g9n8F6F5VKJfygLsv7vRoeHtZwD29rKinXbU2L2Kp0KIP7sIz3MgD0OwILAAAsS1aj0aywaFhzYUWwnqqs8AsrooQYKUOLSpcrLMoQHI2MjGh4pHcDC8uycgss8trNw68SxpZFhcXQEIEFAHQbgQUAILZFi45rfb1yxQpJ0q3bt2vv3r3NB2NuhVmdNOPMoZ+t14ypsPnwcXcWqE6aRvVw6bUvC++AO6wowyC5jV8Q4X5f7HUtkizSGVEWn2znKWwAnaT3wyPDGunhCgurMauZ2Vk1Go1YlSJZVk5k/Wcqi+CMCgsA6D4CCwBAIarGaGuAYwcAIcHFR+s143X2N+4F7ZzteT0fJkofvKoqShdWSPPBhB06BAVIfs/ZYUbKKosyD/KiDLD91iKo+xx/1eFV6Qu36MEv3NLx3BmPPJTLoqdpnHD88br8kMM6fsbnS/rtp73Wt8hfHn+msqiOiLqGBQAgOyOW1bnfPAAA3dARMgRPs3id+4GsQ4sIfegtGYUOaZS0jN6qm9Ol7NigyysAHMogbCjLvczv7gAGCRUWAIBC2QOUqOXk7uOjhBZ5yqP9XAZtBYUW3f5UOuL7UY6RJ9qk2YY27A3NZpcQbhsA6DYCCwBAKcQdpLdNKQkJLXpNksoQX3aVhZ+wNSzSLrpZ4kFe5AUdTz8/m6kcp52WSTNZq2zamPrnS7uNZ5qwIopKJlNCynsvA0C/IrAAAPQsQouI/KaG2KGE3+MBor6+WZfRxymHz+L18wsrFi9e7Hn8mtXHamZ2xvO5Aw84OHV/8rB27Umej99001dVqXQuujk11bknR2XTRmPxFednVsHTtihvwPsY9c94NlNCorWRNrwBAMwjsAAA9LSw0KIX+f08mXNWX3iFFBGrK6wNY6bfp/RZTwkJCiycA8Ui3/u1tTfr1a9epYOf/LSO5w499NACeuTv+hu8Ftac0Xe+vbPbXWmJGlY4Bd2DUlaLbsZro1f//gGAMiGwAAD0vKDQohcl/nmS7gaSkLOffp8qHyGpfvV1re8/t3Tp/PmTW4IrOey+ja+PVS1T9Ps/MjIcazvQMpqdnS3kunHDiij3oCSdJaleW9f6/nNLlzbbD6kmqtfWtdp84uzzfXeHAQDkg8ACANAXCC2KkdvUG0eQ0mtTe4aHR3o6sGg0ZjU7OyvLshSnqCDL9ynO/Z70Hqyb06oGPe8IK+Iq659XAOg1BBYAgL7hHuT3Ir91OMoeWiThHhBmtfBiou1s/a7j86m9/Um7+zpb/+pPVf/iNv3ui9vCK0hKymrM6nnXfsF84NovFHL9zN67KOfW1plx7ruy/hkEgH5FYAEA6Cv9tthmr4QWaWW9S0QZXit3IHPGIw+VLsA44fjjdfkhh5VmkchuhhXONtzX9fp7pOj7CQAG0Uic1bYBAMhL1IFH1HntWV4zi2uFcfZlEEKLsLUK8hqIIj/dfq2zDCajhhZlwO/uAAYJFRYAgELFHRDYx5dhIJplH9yDo34OLboRVjjbirt4Y5bsaSF2tcUTbN9iAAAgAElEQVSKZcu0/bbbtGL58syvFdeOnTu17Jhj5qeuRF2ANWihyiht2OcHHRtjMcyshIUWvf7nDgB6EYEFAKAwHSXXk2bQIOW/6jXjKc5z8xg8BPWhXjPaBklZ96FXQ4ukA/28wwpnm0WGFrbLDznMPOORh4wyhBWStOyYY3T9kU8zJWU3VWVis5EmiChalNAiTFn+XAJAPyCwAAAUou1T9uCgwvbC6mRzHGQHB2kG7THDkrZjnMHFoIcWqcMK1wC2qnw+PY8q70qL6zNvObXkAYJXMDGx2QgNLVJeI8/3x+/ace6LMlWBAUCvI7AAAHRdgrCiTXXSNNKEFlleP2kfAtvPKrRwhgF+g8swAQNPZx8rmzZGfh0XX3H+fJtz7fsNBuO0a/ns6BGX/XqWcf2CntXFyooI98yMtWHsgRzabbsHyxAoAkCvI7AAAHRV2rDAeW6S0CKP6+chVWjhNTiMsm6Al4nN12p8/UlBhwQN5NaubT/1mmuu1dTp5xvO0CIsrPBqw+94v9AiyeAx6WCz7bysKg18xN3JopBP/93BWVh4EXCvBoVIMe7DkWuuubbtXvGr6qkao5o6/fzI96Hdh6zCMwAYdAQWAICuiRMWXHLJWyRJZ5/9Kd9j0lRaVCfNZ0S5/s6bLtSNO7y7mrbSI7SPSUILv6oKr0Gi32C6vQ3PsCJq9cHNN98695UlaVbPri62nwoPi275siTpl/U9cw80JM1qaup3ka49CMLukVKwQ4r4YVnnPZJwutCePb+XJK1cuUz79u3TJRdvkp56sHHDddeFn7xlfiLPSetP0f59+7R//7QuuXiTzj5nQ5LuAAAiIrAAAGQvZHDsF1bYIYFt500XaudN89/7BQeh1567vmuQXQnrw86bLpQkrV5m+l6/dJUW9hPuwWGSHSAyrQ6oSBrRe2v/nKKNobn//JVusN4Fpdl+M+3uIRH47mgysduYmgo/f2LiQ23f/8WC/bGuv+59G9u+n4pyUQBAYgQWAICuCBtQPfmgbTr/gs6wwGn1MrMjNIgcGExsNuxPZ6MEJl7Xv+SStwRWfOS2c0nE0CL29pRuuYUVkOJN34g71aOQ0CIgHMyk/aTrrgAA+saIZVlF9wEA0G8CBizVSfN6SWc6Hzv4oG1aOCrZ/yZ94+ZNiS5bN6dVTThYeuph27RhLHCpBlmWpYsvPknnnNM+d909NSSOqAFHlNDC7zkUK4sgoSfe0zyDCrTwuzuAQRJcVwkAQPbOdD+wYFQaHm5+HRZWXHxxZ6hQnTSfCLto0KDx0EXbtGFsfi570sAkibo5HXlA6x6wBp0Xe5A8sflDru8NPs1OL8uqhzj3SleMrzdD10kBACAFpoQAABLbu9exwITOkvSt5pcTJ3YMXKruBxx+//CYpFlJ+3T269+un/z4V7rh1rv1vR/ubjvu6GN9F7h7tqTEn8qOjkiXfOhEnf3u6yKFFZ5VFgk+/U6yWGKcRRZjfSo/vv7dcr6GDD5TyytcKF21RZSdPwAASIAKCwBAeViW1LDUmPsvD9VJ80D3Y8PDUsVzCc58xamYiHOee3pIIvYn5wxEe0Lc9znzMIX7BQCQAyosAAAl0pBlWbIsS41GI6+LfFnSvzofqFSkoUrwVJCA6o5Ukm5L6Xmez/Ol+0Q+R0ED8W6+BnlUV7QWVXXq3P0mstzuiyRbmLrPtzHlBAAGGoEFACC2o198hCRp9bLTunpdO1D4xs1ez87t/PGrkEaWtYcVkvTiF7yg9fVZa1+lS6/5emAT7ukgUrrFNrMKLYKez3pwWpqtNCPwHOhL4Ys7Rh14ew2k53ak8VPZtNEI2hCzIsnaMBZ6bfd7ELfdsPsi1m4lflND/IIGv2DC2Y7HuXWv17ZmmJVNItAAgD5DYAEAiO3GHVcW3YWM7ZcefUgP33uf7rx7V8ezzuqKfx8/Ueecsyr1Ff22JvV73k9bKFFbZ1YntxjOgXY3Ki2sDWNmZdPGwgeLXgN837BCCg4kon6a73NcdXKL4TWwDnqd1q5tX1D2mmuuNaT5n8tzoO5q16MN32ODAhG/MKpuTkv2febFK7RIssaFzzlBrwEAoP8QWAAAIMmejtLw2TJw4oITNT0jPf6EZ1jxvyQ9I+4V8wgt5jvcHlrYg796bZ3ZatMeEHoN2oOe8+A3+K27vj/W3XePga97UFqvrWt7HRa7j/cZXLe17f45ggbQccMKV9t1c1rVyS2GX2jhZ8+e32n1a/5B+/bt0/T0jC798EW6/tOflhShcuCWL0uSnvqsI3Tcsau0b/9+zc7M6tIPX6Sz3nlu4KlJKmXa7iM3r3smyRQRj3OCKnvse9ArFNq69Stas+Y1shqzqgzNL+F2bH1/889IhPuwsmmjMTPzhIaHF6jis+hNlKoYAEB0BBYAAEjNBT+tzsU+b7/7Hn37ByeqYUmzs96n1mtGK6yIWsHgV/WQNrSoOz/99hl4d7SZcG2AtNNC5vowIWk8cSMReA6u01ZWBHC/n05B0zUk6d/Pm2j7/rkjoTv2dlh3/oXt15wKu6q3oN1n7P+XcW0Ua8OYZ5hyx8oXq77u5MjtuO9va8OY+WCMfpTxtQGAXjNi+XySBADAYLFkuXYnueNH92i2ITUa0t5HfaeB/EzSQVK8AUrQVI0sQgspuMKgbk6rGrSzQ8RPxFMPysbX1yQlXjgyish99AkrLvn011pfb/jNvcb+c0/pi0/Rk753/bigq7OawitwinN/5v168Ls7gEFChQUAAGpWV7h3J3lgT/haFfWacVDSq+YZWjT7tm5+SkjQNdPs6JCRrBfxbIU1cX42rx0pJnYb+rS827DXWfCryijB65oFO7BxhjVFLrqa57X9/oz1QygDAL1oKPwQAAD6nDVfXWGvYXHjjvCZAfWa4fmpbBzO88J2ZIg6SAs7L+iaRSrjoPB5f7ZdFz9+r3HhI/ca5/323vkQY0A4wwpJnj97EfdQHvdKGe8/ABh0BBYAAMxVWDQ81rDwk0VY4XU+oUW5Bo0/vXeFFi4Y0tCwNDwsDQ1JGl/SOZVmfL3Z+s+WwXoYZXDeg/calbnfGBeMbiu2Mw5Zb9MLACgfAgsAACxLVqOhRsPSP66/L7C6ol4zzCzDCq92CC1GW/9147xA40vM3b/+ew0PNQOLJ/Z5TBNyT/3ok6kgkvQfj91rLBiVhockn40xCpX2Pc/8fgEAZIo1LAAAsS1adFzr65UrVkiSbt2+XXv37m0+GHHA5r8dpfkOSZ+XpHrN+I3f+V4DDWebYQMRr+vXrzbsPjxV0gGSvlqvGf9XYEMZyXtNi7B2y7iAYtSfsYNzfYm0AcL4EnPqlFPmvk7VUs855MnDenjvrCxL2i/psbM7Fxwtyz3j2Q/X+1+WvgIAoiGwAAAUxm8F/nrNuEySb1DROs5jgB11AB5WUVCvGb+b+zIwrMh6kE9o0fvq5rSqjq+dSlikEOinb3yrZ9hTpoqcDu6pOO6pO2HnRQ244h4PAIiNKSEAgMJFKet2HhM2lcH9vNd/WfK7RtLrMT0kY15rSQTt7jEgsrhnSxduud/TVpjwau/n/c6Lex0AQC6osAAAlErUAVBYVUCR2y56iVu5QKVFBuxpIVL71ICsBps+007sLVXtbWWdrA1jpiRVNm38uaRjnM9t3XqTGrP7NTQ8/7ofW9/f0a6T+xqVTRt/1mjMvGpoaNiv11+yNowdFeGna90LPRlmzb0fl3z6a9pwkV3XUpG9LWsbwgoAKK0Ry4q2GjoAAGUTJbQoWpJgwUZokQF3aOF+zsmvEiPonKBzA1gbxp5TNUZ9pxLEqXBwHmttGHvukKvdxe3ttoUVUaZM+a41U7Z7w2eKRqUi2b/uLrjoKqMttOjBsILf3QEMEiosAAA9rewD7KTBgtf5RYQWfSHqGgNJ1iLo4voFzmoK9/slxat+CLtPgu6Bsv0Z8zWx25i4/F6NjEizs1KjEXCsM9iKIu7xAIBECCwAAD2P0CL70CJpX9E/ev59H19iHrBQRqUi7Z+WZmakJ97lmhISN3BigU0A6CoCCwBAX3AP6ssgi2DB6/y8QgtkK6/Xt+eDhC6qn3yKaXz8KqNSkf5wlsf6FQCAUmOXEABA3yjbQC6rHT68zs9r9xBkhzCoHMy3nWL+7t8IKwCgFxFYAABKI4ttQcO2R+22Xggt0Ft4XwEAg4IpIQCAwkUZgDmPiTrdIYvrprlO1lM4vM7Puu2+FXW3D/c5KXYFqc7932t707Sc72uS+5j7AgDQCwgsAACF8d2FYNJsGwzWa0bbgM8+L68BV3XSlKRWH9zXj9xOjsECoUVEfsGCzxaYoecVqDq5paNPacKQvrsv7J07goImAEBPIbAAABSiYzqDK6Twe84ZHqQZcHlc/6mSDohz/SjKEloMJGfo4B7ABgUSUcKKgAFx3ZxuhQtegUJl00ZDkqYCmq/M/d/aMDZ/v4eEE0na7bvQwuYVWoSFVACA0hmxLKvoPgAABkzb9I6AoMJLddI00oYWccISr+tL88FFlOsTWhTMa4BaUGWFHSp4WbPmOB1++FNb3//0hz+QHJU+oW75sp73or9pe+iaa6717YczDOkbdpWF5P1eRgmu4gZdSaYbpcDv7gAGCRUWAICuShNWuM6brdeMKbvNpJ8Sp+lDL4QWiCGjsCKouiLMzTff6vhuVse++IWyZMmyNP9/y5Kluf+7Hv/j/ffqG//1i7Y2pqYeDLxm390zztDC/XhcTC8BgEIRWAAACpE0KHAYTnJSFoGJ8/yyhBZwSVr+bx+fQXjh9f4FTdfoNKzXrTw6ZS8S/THpfVHf96T3BwCgKwgsAABdE2V6wkUXndj6+j9v/VDzC0u6cUfn+DFuYBAlrPC8vqQbb/Mev7qnqITJK7Rg+kcGshiMsk4CAACZIbAAAGQvpBw7blggSauXmaGhhSY2P0Pz6wp2mivRr06aJ0raGfn6VvP6r1j1bp177nW+zUcNGKi0AAAACEdgAQDInseny2Gf/j/1sG1693uagYE7LLD5hRata9TW/Sbi4H6n+wFnWBHkootO7Agt4lZZSIQWfamEW6ECANDLhoruAABgsHhVVxx2yDYNe021dy2G/4pV744cLLjFmS7hF5hkzRlCdOxc4goomO7RQ5gOAgBAJggsAACFGxmRhoeaQYEdFrzo+c+MfH7axTMPf8o2XXbJSWmaSIzQIicZLp4JAACKwZQQAEBie/fe5PjuLEnfan45cWLHILEa0M6DvxuTNCtpn6z779NPfvwrfXbr9zPsqaMfk+Zdktr6NzwkVeZWvohSXeE1LSRVn2JMD0FJORbbDHq//BdYAQAAbiOWlWOtKwAAcViWrIalRqPz36a/W/kuZfRv1ovcDwwNSUMVBbaf4fU9EVrkYHy9qYnNRsfOHc6qC6ZvsD5Kj+F3dwCDhAoLAECJNCTLUiPHX8jrNcOqTraPUSsV6ckHj+jbX/uP+QcDunDev79F73nPqsz7FhRaICE7tJA6p4e4wwqv6SNh5ziPmXsuKGCyNoyZlU0bC5+mYm0YG/igBgBQfgQWAIDysCxZjYYsV4XF3618V+vr95/vGRZMSKolvexQRXryk/3/SXRff/909mEFcuSurMi6qsIZikRghwXuQOqOlUdJ4+slza9Xcqzj+erklo5r1Oe26nU9FrUrhGIAgFKrbNr0KerKAOTq+3d8qeguICO3bt8uSTr6qCMK7kl+zqq9Spde8/W2x/5u5bv0wQvfopkZaf+MtH9/Z2Bhb2uaxQDQHqx6LcgZ1H4e54WdC29RpvBEeU+inptkyhDva2/64MEvL7xCBwC6hQoLAEBsN952ZdFdyNh+6dGH9PC99+nOu3e1PXP73ffo2z94iyxLmm0EhxWArdvrjhA+AAD6EduaAgAgSWrIsjoX/GxYaoUVjz8RPBWEQSOc8rofuM8AAIOCCgsAAKRmKuFa8PP2u+/Rnt8HhxRUVyBI1pUWhBUAgEFCYAEAgCSpc0vV3/4ueljBQBJ+7HsjTXDB/QUAGEQEFgAAaL66otFoRDqDygrEFSd0IKAAAIA1LAAAmNtOtb3C4sYd/gvxu8MKBpcAAADZG7EsdjUFAAw6R4WF/7+LVr1m/Mb5AEEFgG7jd3cAg4QpIQAAWJasRkONhqWX3D5rvuSIl6heCz6FsAIAACBfBBYAgNgWLTqu9fXKFSskSbdu3669e/c2HxxfH3t9hygLEuYZEgxJUsF9AAAAwDwCCwBAKZQhCChDHwAAANDEopsAAAAAAKB0CCwAAAAAAEDpEFgAAAAAAIDSIbAAAAAAAAClQ2ABAAAAAABKZ8SyrKL7AABAB3ub06J27nBus8ruIQDKgt/dAQwStjUFAJSCMyAIejyv8MDv+u7nCC8AAAC6g8ACAFCooKAg6PisgoOir98Por6GSV6zOO8P7wkAAP2FwAIAUAivgWh10jQCz6kZpvP8tAPUjuqNSbMh6VlRry/lPEie2Nx6Papez4+vN90PVSe3tL2Gbed5HO95XsBxTqnCHsfP5nlsbV2kPrjbj/N++PWf4AMAgHIgsAAAdJ1HUBA4eHUfZwcHaUKLtmkek+YeSX8V9/pp+5A1d1iRp7jvYcdrFnSwKzAJvT/Gl/xX3Zx+SqvtkPcjLGihigYAgHIgsAAAFCpqWOE+J01o4QorDEmx+jB3zk/rNePgpH2IZXy92TGInthsaGKz4VkN4Xisdd7kFt/j0wQdMcOmmXrNeMDdRzeP9yfYxO4XVhUtyApbE8X5fJnCKAAABhGBBQCgq2IPRn0kDS2yur6k51UnzVZoUQb2NIrIg+yAaRlVY7T1WjnDkrjTQFxi/d6R5v0J66ffa2Q/nvLnBAAAGRgqugMAgMERNSy48MI36MIL36DVy02tXu6/lIGzjbgDzLDBcJTrS3pe0uuXjdeaEUHVB31lYrehid2e90Pf/swAAPQAKiwAANnz+uTeMQXALyy48MI3tL7+7m2XtL5evax56o07Inzg7lc14JhWEcTZhyjXd1Z69JwIi2tmUFXRNUmmb1x87a3StTIl6b31bcb+c09pVan0ys8NAEC/GrEsq+g+AAAGQNjg7/DDtumsc17f+YTjn6nVy8yO0CByYDCx2ZA9ZcInMNm48fWtC35vx4c9nx8b+5zvJXJb82BisxF1lxAvrTUqYuz+4fw5+nYdh4ndxkev2a3Hn7D0xD5JleZjGl/S9jqxlgXKhN/dAQwSKiwAANkL3D7TfNT92KGLtmnhgvnvvcICSfofy98pKSQwiDgod2uGFR6szuPcoUUhVRYZhxVe0z/6fZBuPH2bFi4cUmXI0tCQNFSRFoxu0/5zTym6awAAQKxhAQDovr9wPzA6Ig15/Yvk8UGiV7BQnTQPD7toUIXHUw/dpis+srb1vV9gUpjx9WbbGhNRQ5m56TFe61NE0e9TIsy3nWKODFc0VGnef5WKZE8Jcer34AYAgLKiwgIAkNjRRx2hfY/8vPX16uUvtJ/yX2xieedD/+NFL5DUHhS8/EVL9Z0f7IralYVRD6xOmq+VdIfzseGR5mA1qrCpIbnz287UfYyShxW20N020jSesagBS9UYnZK0WJJ+duJbzerVVxlDQ9Lj58yHFf0e1gAA0AsILAAAid1425UZtjYraZ+s++/TT378K92w7e62Z5vTQTJxi/uB4bnpAB0cFR4ZXj+xem2d2ZriEcReeDTh9Jh+39qzbk4vdlZN1E/urKoAAADFY0oIAKA8LEtWw1KjYWm20cjrKpvcD1Qq0kEHjejrt5wZaTrI+89fG3pMbuwQwmc3lLgLbAapGqOe//WCsL7PhTF/9Dh1b9v2uz3y8wIA0I+osAAAlEhDalhqWM3Qwuasbpj4wFqNja1KfIV6zXhHdbJ9LF+pSAcfNNw+LcSnuuIDH1ir/dPJr58p19SQtuqLuUCjY8qGM8jw2wLW+bhH8OHc8rNeM0y/XVfc4i5MGqdtd/+Cnmv13Zw+yOOQRVHaAQAA+SOwAACUh2XJshqtKgvbpZes1eysND0tzc52nhZlIOwcqLqZU6t0zMv+UweMHuH5/KUXr9XMrDQzI1m5FX7EML7e7Agb/MKHLogbRFSN0cD+VsfXm85AJGX3PK8fujYHYQUAAIUjsAAAlIdltSos7Ckht999jxoNabYhzcwqsLohzSBzdNQxS9K1O0nDanVN+/Z7Xv9USeOJL+4naFqH+znHIN9j6oP3a5Ni2kiUQX9iE5sNZ2gRR9R7gEACAIDyG7Esjz3jAAAIcPRRzUqE1ctPy/dCFemlf/2CtodWL/caY89NG7gvYrseO5UcMHqEPnPZWt151y5dOvn11uPfu+ueVljx2OPeYUm9ZmQfVvSAuItztoUEEcKSOKEIAQQGBb+7AxgkVFgAAGLLdneQMtgvPfp7PXzv/R2DAbu64tE/+FZ2vFjSl6XBHTTn+XMP6msKAAAILAAAmGPJci32eeMOQ1Lw0hD1mvHlnDsGAAAwkNjWFAAAqW39jKicC0JSCQAAAJAtKiwAAJA0X2ERbRsQwop5ea4zEWfhzUF/HwAA6DcEFgAAqLlQRcMxJaQ5HaSTe5vNXAfJjq0/q87HwxasdJ1Xr63zPj7KVqgB14q7i0fbjiVh106wS0jdnCa0AACgjxBYAABgWbIazf9m5wKLes0wq5Pm2+o14+N+pxU2OLYH+x5hQnVyS0cQ0HrMeXyUsCKG6qQZ2J4z6Kmb0+0BjNfxrrAiqP2OtmO+L4FbvwIAgMJUPvCBLeyNBCBXd/3gK0V3ARm5dft2SdLevTcV3JOMWY+r8dCDevDn9+u7P7xXL719NrCCIe+BbWsA7QgafKsT/EKIucfr5nR7iBFhO9GgQMTdR0mqbNroGyasXXtS6+trrrlW1oYxs/VzRGj75D11Y3Z2pq0NP3bbYe27r+GF8AJlNXHASzINGwGgzKiwAADAsqRGQ42GpX/69ZBZ12zHIaUawI6vN70qJOypH86+Vo1R1WvrTK/KC08RKi+ihhVuX7j+Op39/3821mDrisv/QzfcsDXSsZVNGw1naOEnylQTppcAAFC8Efd+8wAAhFm06LjW1ytXrJDUrL7Yu3dv88Eon+KXzJDm14not4Gq8+cJGqw7Qw3fdS9iuvnmW1tfX/7R/9BLXvqyWOcPVYba2piamop0nl/g4Pz5/d5n+xhCC5QRv7sDGCRUWAAA0GeSDLQjV2CkEGfLWNvQUCXx9QLDmYDXp2qMEloAAFACBBYAAPQan2kbvgNt564hEQff1cktRpRKmWj1Dk1WxC1jnSpDQ7HPCeN+DS6+tlnBcc5JK9uOibtLCQAAyBaBBQAAZTex2fDcVcNrlxB3aBF1wU2vxTsnNkcKLaJKVGFRiVdhEbca4llbrjbOHF1inr9nl/Hei67S/nNP6bnpTAAA9KvsP7YAAAD5CwgS7EF77N1Bkhwbg9VIMiUkv19VnnPdJ4zh4Yo+9MddxtCQVKlICy66qnMxUyotAAAoBBUWAACU3dy2ps5tTsNOSbuApl3RETZYj1P/0LASTAmJWWERx893rdCfH/E1VSqSHVjs279KGm8/jjUsAAAoBoEFAKA0wgbHeQ8ci75+ZGFTNRxrVmS120cWGgnWsIhbYRGlGqL1Po4vMYeHK0alIg3NhRYaX1Ka1wsAgEFHYAEAKFzUknv7uKyDg7jXz6MPka5fW2e2Kif8Qgvngpzj6820/QzbGjSOJFNC8qiwcC5I+tM3vtUzoGAaCAAAxSOwAAAUxmtQWJ00fyJpedtxNaNtUJllcOHTh851DDz6UEjFxfh602+XEHdYEdiOfWyC9SqcC3taG8bMyqaNkbZETVJhEWeXEGvDWJyf5feSnuLz3G8lPU0qUVUNAAADaMRKsGI3AABpuYMCR0jQMfh1BgjO4CBNaBBwfU+t58eX3Fk3pxenvX4qdmgRNDXEL9Swj3e2EXQdH0lCiyRrWETdJcQZVgS9J44dVJ7idezc80+L20+gW/jdHcAgocICANB1bVMrQoICt7njf16vGQfabcUNDeKGFW0mdv9tVfPBSWGhhVtQ8OAnqFojysKertDC65i64+t1ktYtXdp8vcL6O7fQqG7eqfrNO8O60tanqH2Wgqd+lOJ9BQBggBFYAAC6Kk1Y4fCc6qSZSWiQtA/VSdPIPbQICg3czyXdijTlFqbuACDs2DjXjdN2R/sRjvNrm6ACAIByILAAAHRNRmGFsw2zXjNitZNlH7oSWvSAPH/uXm0bAACkR2ABACiVCy44QZL0v77xkfkHLenGHZ7ZwkskRQ4MooQV9vXb+uB//bbQAgAAANkhsAAAZM9rfQLHFIAoYYHb6mWmZ2jQFhiErYtQW2fOnfMDeSzu6RlWOK5/1DFn6rzzrvdtfpCrLAAAALJGYAEAyJ7H+gRhaxE8/fBt+re3e1dX2C644ITgwKC2zowYGKx2PxAUlriPc/eBKgsAAIDsEVgAALrKq7ri8Kds02jEf5HCQgs/YYHJx654m049/eOdT7CDYKA4i2JK8daNiNt23PYBAEC5EVgAAAo3PCRVKs2v/aorgqStcHjaU7dpxPEvons6iCQddcyZSZvPVJmmnSQJFOxzqpNbAqfv1Oem7yRpP8rrE9b3srzGAAAMshHL4qMjAEAyRx91hPY98vPW16uXv9B+yn8wurzzoZf81QsktQcFL3/RUn3nB7ta37/46Lcri3+zqpPmb939GxqShirqbN/xrfO597//dXrf+76Qui9JlSG0cA74K5s2RtptxdowNh9CxNhONUr7ixf/q6KGVlGCljK8xoAXfncHMEiosAAAJHbjbVdm2NqspH2y7rtPP/nvX+mGbXdn2HabivuBoYp04JOG9Z+3na1XLL8ktIGNEyfrfe9blUvn2jgWEa26noq0XsfEZiNSMBCySGqQsDDh1PU157fzxz4UpfU5jjY+tnnS85CpqU9KGglLjJYAACAASURBVJMUHDa07RRjjFrqvB8adXN6KKwdAACQPwILAEB5WA1ZlqVGw9Jso9F6+MVHv7319Qc3pQsL6jXjT6qT7WPxSkU66KDmP4nf/+ZHO85xXn/TppMTXztL1cktRtC0CXvKRejUB7+pGRObA9uP6otf+mrr6ysuv1if/8LNsc5/y5tep3Vv/bfW91NTU77HVjZtNOwqjohTPjrCK0lDVWO0dT6hBQAAxSGwAACUiCU1LDXmQgvb5R85WbOz0vS0NNvwOG18yQ+k6acnverQcEUHHTjc0ZXW9S87WTOz0syMZDWk/dP5Vlc4B8ySOqod6ua0qpNbDL/QImx9CPdxfm2EhSJxNRKUsg8NDWV1+ZaqMfqwpEPt7y++9lZJ0jknrXQe82DdnP6TzC8OAAAiI7AAAJSHZcmyGrIa84HF7Xffo0ZDajSaYcX+/Z1hQd0MDys6QgCH+3+zUn//yu/ogNEj/Lolq5mlqFvTx52f6rs/5ff72mtqR5TqgKBjws73r3foZDW80qZglSGvIgh/EashWmHFs6652nj8CUtP7JPee9FV2n/uKXZAQ1gBAEDBCCwAAOVhzVdY2FNC7JBgtiE9/kRwZUPVGPVej8EWUC3wtW++XKuXdz79vbvuafXBsryrK9LsUBJV7KkJ4+vNwNeiAIkqLCrZV1jYnnvdJ4zh4YqGKpaGKs2pQQsuuspwhBYAAKBABBYAgBKxWmtYNBqWbr/7Hllz1RV/+KN3WBE5LHBMq6jXDLM6afoP5tt2B5mvrogUmOQoNLSIsfNGEZJUWAzFrLCI42e7VujZR3xNlUpzp5hKRdq3f5U0ntslAQBADAQWAIDYjj6qOXVi9fLTcr3OS//6Ba2vvaofmhzBw32S5rdWdWsPKDy2V/3MZWt15127dOnk11uP7XkoOKToRnWF75oUJQ8o3JzrkkRVybHCQuNLzJHhilGZq64YqjQfy++C6JaIi64CAEqOwAIAEFu225mWwX7p0d/r4Xvvb5u2cOOO4BkVzrCi2wOgKIthVhUycKutM6uTWwz3jiDOgCRs4Ben/qFh5V9hEdZfm/1+/fSNbzU1sbv58zrCiqjtoBzivl/u4wkwAKCcRqxurR4GAECpzU9HiaKrYYVdSTG3JkWWO3fYou4skoaVpMIih11COgRUVTCQLbesgiW7nV54v/ndHcAgocICAACpbcHPMEVWVkhz4ULE6SCh/XOFIa3H5r73Oz/JQLGRZA2LSvQKC2vDWOj7Yvfbb4BKZUVviPo+XXXES9uCuFN+dXvgn5teCi4AYBAQWAAAIGm+wqI5qHZPB/mbZ/1cN604pm2w0/VBTZ47fzgDkBjXsDaMmZVNGyMdn2RKSCVGYGEL26bVOdgNGvgyaC2foPfLHU5EPcYrxCC4AIByILAAAEDNrUDs3UmkzsU0b1rRPs4pbCBjhxYTmyNXWaS6lg/nwN9Z2eBWd3y9VtLapUvDt5+VY9rLV7+h+le/0Xbd1jEJqyHsNvzOZ5BaTn7vV5SgIoh9vl9wwf0AAMUhsAAAwLJkNaKtYVGqwYtXaOEOAtq//5nG1x/k2Y5bhDDEXa0QheP1u1XSSs+DxtebYaFChPYzPRbF8roP0gYVfu25gwtCCwAoDoEFAACOBTcblqUbX/535d7a0m9qSPhUjudKCg447PYjSjyQG1//lx198Wk/SmjBgLJ/dSOscLdNaAEA5VB53/uuYqlhALm650e3FN0FZOTW7dslSXv33lRwTzLWeEyN3/9WQ5d9u9xBxQDzWlOAdQb6nzuseNLBh+iyp/5F7jva2NzBRRnutfNH/qZrPz8AFI0KCwBAbIsWHdf6euWKFZKaYcbevXubD+a9tkIOurB5JoAYig4rpM5qCyotAKC7+P0MAACUWtiUELYi7X9FhBW2l97y+bbrcr8BQPeMWBH2mwcAAPATZwAX99PpqG3zyXd/cb/vlz7leYYK+p21dvLF0n13FHJtL/zuDmCQMCUEAAAkkuST5lawELZA6Ph6M277hBb9wf2+b/7TlxS+ZsNLb/m8cfur/4WpIQDQZQQWAIDScQ9YihgYOPtQ2MAkaFDvt06I3zlh64q4z4u5Dkl10gwcVNZrRvtgL6S9ttffp21nG3b7DCT7SxnCCps7tAAA5I/AAgBQCkGfpncjPIh6/Tz7EMvEZqMjVAgKOLyODzrH7/g5UQIFJ/uYVnCRYdv2cYQWva+s60PUTr5Yk1ef0/YY9xkA5I/AAgBQqCRl/1J2oUGqaQ3d4hc0+IUKcY93nxMyXSNJoODVRthrGLdtZ2iB3lem6gobVRYA0F0EFgCAQngFBbGnFaQMDToqJ8IGyONL/nfdnD7UeW7Rn7C2/Qy1db4DKXv6RMfP7NNOdXKLoYnNRj2gTWDQUWUBAPliW1MAQNd5BQVRpxU4j0tTPu6uEoj0af7E7r90H1fWEvYoqpNb5qZpEEqgeL3yZ+m47TtLV/kBAP2KCgsAQFfFrmrwkHa9grRTGtzrMXT7U1bnopVxr+t1fFAbfHqMIpRxOohtz8xvi+4CAAwMKiwAAIVJuv6B+9w4n8xmsf5CVucnUTenW5URkXfyCNtCFAAAoIRGLMsqug8AgAERNSw477x/kiTd9e3/V5K09TbvQ9NUWmRxfadcqywcgUPYdqBB58bdqhQoSi/9ftrtCqteem0AIC2mhAAAsuf1ib5jsOwXFthBgTQfFkjS6mXNU2/c0XladdL8cb1mHBl47bnrh1ViJLx+/jtTjK83w4IH70VMt8xXoXisU+G3EGfYc17HAYPkuO07jZtWHEMACAA5Y0oIAKArwga+Tz98m+fjzg8TnYGCw99H6oCzSsEjMPFpO9YxeS0aWDenAxfGTBJWAGXSKwtuAgC6iwoLAED2AqYeVCfNp7sfe+ph27TAUVHtrG6Io25Oq5pw2sPHN5+qt63/WMfj7urr8877J11wwZfaHnNPTclKR/WCXWkxsdmwX+O2aTZ2WbqrGiOsXD3uopvdGlzWa4ZZxDohAACgHKiwAAB0W0dYPjwsVSqdB3pN1faqcqhOms8Iu2jQIPtPnrLN8/pOL3rFv4VdIlcdwcHEZiNKWBHYqP28exrN/Pf3hfUl6XSYPOb85z41BwAAdBUVFgCAwg0PSUMVadtX3qmnH/Zsz2NCAoOQuGFeddI8V9Jn2q4/3Lz+bV89W8v/4ZLQCg/PKoscF91ra9uxnkV1cotRr60zE4UVbnbVRnsbw0F9sgOTREFBwM4lVcd6I0naZitWZO2TH39X0V0AgIFEYAEASOyYo47Q/kd+3vp6zfIX2k/5l/Ev73zoqBe+oOOxv37+M/XDH/86g152uML9QKUiPemAYR34pPbxud9i/B/cdKouuGBVHn2LpF5bZ9prVHiGFV7f29xBhjOkiBl4OEOLOEIDhYnNRjXCIqmJ2kYpJb2XAAD9jcACAJDY1tuuzLC1WUl/lHXfb/ST//6VPrv1+61nnNUV//Gh1GHBOZI+4XygUpEOPLAZVnxv57t1wOgRbSc4r/+hD52a5trxBOwG0lZZYR8bULXg117b4461MaKKM9Ds6G/E46O0T1CBbnLuEMK9BwD5IbAAAJSKZVlqNNpLG668/FTNNKSZaanRSNd+vWa8vzrZPlauVNSqrnCHFa3rz0ozs82qi/3TnYFJtz8d9hwkJVxwNO35eQ/YGBCiSEwHAYDijFh+9a4AABShYanh+repYUlWoxlW7NvvERZEWOcgqBLAnFql5f/3t33PtSzJUrMPZfhnkwE8+h2/n/rjtQEwSKiwAACUimU12iosvnfXPbKsZljRCPk9Pc1AfqhSaVu50zkmsMOKhiXtjxCYECgA6Zz26++bVz7zxYVvafupT7y747HDR55WQE8AYDARWAAAyqVhyXIkEw1LrcDiiX2ea1c81vZd0DoOtXWm1AwYqpNm23Ff++bLtWZ5Z6HGd+cCE8uSHn8ieO2MQQ8qgqbFpH1t8mwb5VC2hTe9wgqpff0KAEC+CCwAAKViWfNTQr53dzMseHivf1BQrxkPtT0QsA5DkgGRHVY8+kfvPiTa0jOqoPAlaL0Jr/PC1qewz4m5jkXU19N5XNSAIc+23ecSepRPkVUWfmGFu7qC+wYA8kVgAQAoFasxv+jmg78L2Q1kfIkpJftE1qvKotUHx3SQ3z0UbUeSrg9cvHb0CAo4EuwAEibpp+F1c1r2tqy+x8xVwyRqO+S98Op3mtAD2XGHip+75jy9fu0FXe2DX1ghUV0BAN1GYAEAiO2Yo5o7aaxZflqu11mzPOwIV+BwX8wLuNr/9GVrdeddu3Tp5NclSTfuCP5wN9fqCie/YMIvhIh7fILqirYBvk/w03GO8/WKeK2obTvbDwotooQsUUIPdMc3Vq4xj77mPKNboUVQWEF1BQB0H4EFACC2rbddWXQXMvaE9IeH9PAvf92xQ4mPV9Vrxmfsb7o+cBlfb8aa9uF3fAbiBArVSdPIKlRIIqyKwvk8oUVx3FUWDWu2K5UWQWGFRHUFABSBwAIAgDmWZbXtUOJ1SL1m/EZScWGFj7BBfjXgOPdz9nSNpNMyshInDLGPdwYivsf5vGf242Va+BHSt1a91jz61q3G/7dlXDOa1pvXXZT5NcLCittf/S/sBPR/2rvbGMmus07gT/XLeGbMmkCCQ7lm1zEWMkL2SuzagYQVa2W8gxTL3kT5xi5IHRtltFJQAhKjtRuQspMIG0gQG5yJN1ZLsfiyEloxQ1Z4NHbYwOIggmLASkABJjZT06sAmXgSQzwzrrsfqqumXu6tuvXW93TX7yeV3H3r3HtPV4/Vdf71nHMAKiCwAICOVn9gsWtTPmY0ywA7lXBitwwONL/7459sfPu1iH/6ufcN/fyqLKozWGXxf4492Pz3Z083VrLV+PROuPBTDz8+833GBRURwgqAKq1l5UpfAWDfa+9Q0oqIiCdvfWu6A/ie6R0D0xyyiKiNaj+uumDcsdSV7vPJrzYa3/tMrNQiarWIA499snHlRDu0SG17zWWVF1r82NnfabSiFVnWik9/6ucji4ifmrDi4tNPnSjddnDdihR47w4sExUWABARkUW0WmOnhAxZ5MC2M1WjaP2J3qqInYH6yLBi3ruE7GV33H4uVldqUatlsVKLvFeOBH3u2H9s/rtn/lfjWrS6x/ICiD9/z8PNX33D9zcmCScGDVZWROzNEA9gLxNYAEC0P7UssYZFEganbxQOosaFFVPsDrJvZBErq+3AolaTV6Qqr9rlD3/83c23P/PbjVb2etQiIu//2H/925+aaZFZYQVAGgQWABARWavVrbA48/YfTWsA3wkUdgKGcQOn7ebV7toUEcXrU4yr4OgcH7W+Rb3oiYqMXXx057X7q594uHn70/+jUatFrKy0p4WQprzQ4o9+/D3NiIgf+b3/Odfdb960dnPubiDCCoBqCCwAICIiy+LNv/vV5rtipeqeFOtsT3ryVKOoKqJsWDHquWVZiPNvfvKnm3Hyq43YfEvfz2n9ivQU7eDy+Z1KiB+eMbgoCip67w3A7hNYADCxm266v/v1sfvui4iIs+fOxeXLl9sHK5hiMDiQmXSQkXBMkS8ntJgkrFhWQzt/jAgrDFTTU7QgamcKx/3nfr/xD9e+Vupao0KKzr0AqJbAAoB9YXAgs2+3pOxUWQwYDCti83hz1p9/1Pk9r/VPRsTTM92o6B4bjWZ9q1n6k/PebWjz+t7pc+e/g22EFXtDUbVFRIwMIKa5BwDVElgAsG/khRZ7WWd9iKGfY+OhZn3rqUacPNXoVFH0hRURxetSzLn6ZXuj8csRUSpYGBco9D7XDRdKhhZlrl3234fB6t4wKriY9ZoApEFgAUAyyi6YWKbNXg8rOoqmdWx3QouC7xdtaPDfExiUObcwUOm02Tze7A0t+s7t3HOK3/G4fx8GrHvPrP/P+50DpKv2yCMfT3//NmBP+6svP1t1F5iTs+fODR2bdQ2LWQads5hXoLHsg51JX8dJX69Ra5PMum4J7EWPZnftWjAJUDUVFgBUJm+wW9+6kPdmPNveOHJx8LxZBqhFi/fVG+uX4uRX7xzq6wQVBMtk0SFB0e9pt/sBAOw+gQUAlRj6dDw/qOiodZ7f3jjSDQ5mWVhz+P7ddRJy+9HzfLa90biY14bFGBdaCCsAYH/ac7u4AbD39e3GsHWhMSas6DPYfpqpHSPCijJqve33y1oZAACpUWEBwK4aDCumvU5960KjU20xbaVFfav5tYj4oenu32x0poksbAvVaXf6GDxvVPtRi1/OeUeRaY0LhfbtFrYAsORUWACwa+YVVsxyjYHB71RhxfX7V1RpcfJUozBoyDs+qv24+5Sw3bxa+jGpsueodAGA/UeFBQC7rr514dci4qN5zz366IMREfEXnz/VPZZlEWeeu2XkNct8yj4cmNRy7v9A9+tOH7Kd/bTOPDc8fu+ttFiYwUqHTpBw8lSj77nO8VnblzRtAFFmW9Po2dZ00v6otgCA/UFgAcD85Q1G+wfFQ2HFm990Nh5+38eHTuuEBQ+842JuaNE7NWTsIHjjoebOOW/euXrPk7XcsKLXo48+EB/+8JnCy+/a1ITN480Sr/H49jOYZh2Qvik0oxoOhBVF1+69hl1cAGD/EVgAMH85A+dxn5av9ExSzAsLItrVFx/+8OnCa2xvPNQsGRgM/f2r3/xMvPenH8hrO9CH4dBiV6osElZ20dK+12lEVUeZsGLUta1pAQD7w1qWZeNbAcCc5K07cfMbz8baWsSov0l3/cj7IsuyeOSRB+IjHymucigyKjB503efjQPr+ffvHOrcf5b7TKpTQZB3zVHPlb1Wt0Ihp/pie6caZex1J9th5fr1S4QKk1572YMjloP37sAysegmAJVbXY1YqUV89pmf7zte9n35rAt4rq607/+5cyciIuLFP/7kLJdbuPrWUxMO5CdrP+05AADzZEoIAJWr1SJuPLwa33Hj2sLDgvrWhb+PiL7B+MpKxMEbVuLQwdX4wh8+EgfXbx15jQPrz8SVq8d6jgwv3jlPReFBmSqI3nOL2g8e75xT33qqUbbSAgBg3gQWAEzt3ntujSuvfKX79YNH7+o8Vfzp/NHhQ3ffeWff94+feFf81ukvxAtfuhAR7ekYHR/76PvjIx85FvNUq0UcOrQ6FDv0TgeJiPjvv/H+uHYt7wrZ7q+ZsHl8/HodvVM98trvrCORe3znXGtBAABVEVgAMLXTzz4xx6u9HhGvRfbyy/GXX36pbz7Ik594f7zeirh6LaLVmu0u2xtHvqe+daHvWK0WcfjQakREtHLmoTz5iffHtdfbXcqyGKiu2AWdBSon2YZ0IKxYTMcAABbHGhYApCNrRZZl0Wr1hwZZ1g4qWq38dS2625pOaW21Fod2AovDB94y3K2eflS63t1gcFFEWAEA7AMqLABISBbR6g8sPv/Ci9FqH45Wa/rqhnpjvXBHjZea/yGO/djzxb3aCSqygsAkYr67g3SM29kjb32JMmtWTHvvUe0AAOZNYAFAOrIssqzVNy2jNyz49mujw4p6Y3109cH1AfwrEfGdvU+d/dzb+kKLTheef+HFdoVH1q60yAtMZq3wmMT2xkPNokU4Jw0rOu2LFt0EAKiSwAKAdGRZZK32o6O1E1h865/yw4rSYUHP1IjtjSPfqm9d+M7BJrm7g+zc/5vfGl/ZsagFKosWxaxvPdUomiZSGDrkTBEZ1bboZ1pERcnQPTYazfpWU3gCAEtqLat0Mi4A9GqnA50KizPP3RIRt5Q6szuwHrFmQ++0kO2NI8361oWxg+F/uDQ6qNjN6oqRenb2mOiciPyqlJJrX0wYKvxORNwdMTrcGTV9py3/vUsyvwtYIO/dgWWiwgKAdOxUWAwuullkmgHqwGD4NyLiZya9Rt79F1JdMSo0yHtu2gU2pzivP/xplD3/7u5X48KVnWkqE1y7r28AwN4nsAAgIa1Yv+NM3H1HxN3vHt1yHmHB9saR90TEUKVF5wPMdoXH4u6/142vhCg+r8prAwB7g8ACgInde097rYcHj/6XCntx8XrI8PKMlzra/s/Tv/7e+NMXzsfHtj478sbbG0e6JSDLPkDu/PxjdxPJW4djTtfOvT4AsOcJLACY2Olnn6i6C3N2JeKbX49v/O3f9e1Q0itv+olB8nWLfC28zgCwnAQWABAREVlkWf/6GaPWyDCIBgBYLIEFAES0F65oZdFqtSIi4slb36qiAgCgQitVdwAA0rBTYVEwJURYAQCwuwQWABBZxM50kLJbqgIAsFhrWcEnSQCwNLIsstbwGha9tptXVVkAlfPeHVgm1rAAgJ4FN1utLHf9ioj+7TWFFwAAiyWwAIAsi2i1ovXJrzR/uOQpnfBCcAEAsBgCCwAmdtNN93e/PnbffRERcfbcubh8+XL74Obxwu1AU9FbLTHrdYQWAADzJ7AAIDmDYcIiAoF6Y30uoYWwAgBgMQQWAFRuXHCwqLUjZg0thBUAAItjW1MAKjVpYLDdvDq36RwR04cOwgoAgMVSYQFAJXKmfVyKk+fvHHnOxpHu2hjzXPSyU2lR37rQGNd2e+NIU1gBALB4KiwA2HVDYcXWhca4sKLTbjBUKFNtMbbNyfND1x3Vh5nvBwDAWGtZllXdBwCWSN96FFsXvh4Rd016jfrWhUZvtUWZ+xXu5nHyfKmgIveczduG+jD2fgAz8N4dWCYqLACoRL2x/rWYIqzont9T6VC2omGo3TRhxYjzVVYAAMyPNSwA2DV9A/qT53+oqN2JE++ML3/hU93vTz97S2673kqLvIqGvACh225EWHHixDsjIrp9yLKIM8/l96HUvQAAmJjAAoD5O3lqOAzYPN6dPlG0DkQnKBj0wDsuRkR+aDA0PaTn3vWedtsbD/Ut2Nn7XN79ewOTTh9yQ4uT50tPTwEAoDxTQgDYFeOmS9RvPpt7vHe6dlGgMam8wOSWgvt3/OA9D8/t/gAAjKfCAoD566mmGJQXFnzPG8/GgZ6/SIPVDRHtwGCc7ebVqG8eb06zlkStln98cH27EyfeGY899r/7jk2yCCgAAOWosACgcqsr7cDgD579r2Pb5lU5TLMAZ6+b33g2arWIP/r9RyY+FwCAxRBYAFC5lVrE4UOrcePhtfji87/QPb6I3fvqWxd+afDY6mrEDTesxKEbVuOLz/9CboVHrwPro6eP9LJzCADAdEwJAaBytVrEjYdXoxYRB9dvHXq+Mx3kE7/5gbh6LeKxx47NcrtfGbp/RBw6uFp4Quf+T/zmB+LatVluDQBAWWvZIj6+AmAp3HvPrXHlla90v37w6F2dpwq3DI2jw4f+7Z139n3/+Il3xW+d/pN44UvtZSGeevID8XoropVFtFozd/s/R8Rneg/UatcDi1bP38XOl089+YG49nr7e382gSp57w4sExUWAEzt9LNPzPFqr0fEa5G9/HL85Zdeiuh5T55l18OKgvfqpd/Bb28cebK+daHvWK0WcfBge5bklSutOHwg/+KdwOLK1fIVHvXGeum2AABcZw0LANKRtSLLsr4qh8//2YuRtZ8qDAu2N45c7Hxdb6xPHBJc+H/H4tAN7QqLN3zH9w13K+t/AACweCosAEhH1i6jaLV6pmW0eiosxoQF9cZ6xMlTjYiI+sBz2xsPTb3taG9YURCY2NIUAGDOVFgAkJBsqMKidzrIa6/lTsV4vMyV61tPXd/6NCdgOPu5t/UFIp0uPP/FF7vf//O3Z1rsEwCACaiwACAdWRZZK+tWWHSmg7xyuTgo2N448p/6Dmwe74YRRVuKFk0ZOfcHb4sHj17sO5ZFxKVXRgQVm7c16w3blwIAzJsKCwAS0p530VkF/+//8Vh8/Rsjw4puOJEXQow8tnnbUJXFYFgREfGPl8pVVZS9PwAA5QgsAEjHQIXFKOPCijxD7XJCi4kMnC+gAACYH1NCAEhIK9bvOBN33xFx97uLW00SVtQb67HdvFrcbvO2Zpw838h76sxztxSfM+39AAAoZS2zPxsAU7rppvvj2H33RUTE2XPn4vLly+0netaRKJK35kN960JucNA9Z2CxzKkrKwZt3tZs9+diI6J469J/8y//Oj5z373N+sheqrQAFsd7d2CZqLAAYGL33nNr9+srr3yle+zBo3d1Do8Z0hc4Oq7Bxf7rvjzVXQo9/evvjT994Xx8bOuzETEckHzmviPt4yooAAAWTmABwMROP/tE1V2YsysR3/x6fONv/65vS9VRhBYAAItl0U0AiIiI9u4knQU/n7z1rVNNawEAYD4EFgAQ0V64opVFq9Wa6DShBQDAYpgSAgARMVhhUZZpIXvIyVPtNVBKLAo78vwiedcdd8+ia/a2H3ff6c95R2wef7qwT6Nep1FtZn2dJ+3HuNd28Pkyr/kkfRn1Ws/6GgAsOYEFAEQWsRNWlF3DQlCxxIoGwKMGz3kGB7qbx5u51yozkB7Xx7z2eWHFYNtJB9xlw5UUdH62aX9/vefmXW/aawLQZUoIAGRZZK3RFRb1xnrfA7qmGZAODnR7w4my18sbLJe1iEH0LP0Zda1FhyC9r/m09+r9eSf5HQIwksACALrTQVrRamVx5u0/2hRQsCuKBrbjBrzThAOTTPWY1DzDiqqVfQ3mNfUFgEJrWcnSVwDYt7IsotWKN//uS813yfL3h0kG3nlt98ogdJ5hxeB1T55qlJrSsF/Cit4pOfO83pynhXjvDiwTa1gAMLGbbro/IiIu/8xP7N3ByQAxxT4yj0HnItcemOfin5NWTcy7KmARYcVgHxcw6AdgbxBYAAD7U5ndIaYZwFe9sGTebiCjBvRl288SZggTAFgAHygBAPvPbg+gq1pocZGLbU6yEGXVIQ4A+5LAAoCp7KfpICyxwWkHnce4cwYfe8k8+5tXvTGLvCqPWXfwAGDPElgAQESUGqiWacPekzeAX+TvRtU4yQAABSlJREFUOcUB+OA6F5P8W593aDHYh5ReJwB2lcACgImprmDf2avVErulTNXJXreoBUn3w2sDUBGBBQCU4VPevWWv/L6KFgIdPD7pzzOq/ajnZpnuMmvlSO8Av6gfoxZOHXds3lKslAHYZ+wSAgDjGJDsTSkvFrl5vNm3Y0cZ8wwt8trNsxJgt7chLfpZy273Wqb9vO8PwFgrWZaFh4eHxyIfsKcJK/aeaaoCZrnGtEbdY/C5cf2ZtX2ZtmX+X6hid5ZpnptH+3nfv6Sq/6Z7eHh47Oaj9rM/+6tGE8BCvXT+/1bdBebk7LlzEbFP17Ao+pS595Nic9KBiv3cP3+/EBVYGtawAIBRhBMAAJUQWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJEVgAMJF9uUMIAADJWau6AwBQqc5WpRF2BAEASMhalmVV9wGAPWLfVFf0hhQdRWFFXtvBY4IOYJd47w4sExUWwML9q7e8veoudH308F8bWNIOGOZVWSGsAABYCIEFAMupbNAgkAAAqIRFNwEAAIDkCCyApbLdvFp1FwBgKv6GActGYAEslYOH/0XVXQCAqfgbBiwbgQWwVP7bDUeGd3wAgD3A3zBg2QgsgKVz6dLBqrsAABPxtwtYRgILYOn4hAqAvcbfLmAZrWVZVnUfAHbdB1+9vfGxG//GdpUAJO+Dr97eiPCeHVg+KiyApdV+AwgA6fK3ClhmAgtgqX3w1dsbtokDIDXbzavCCmDpCSyApff4G36gYTEzAFJx6dLBePwNPyCsAJbeWtUdAEjBhw40GvFqxC9eaTYjIr7ru75ddZcAWCKd4PxDBxqNOFBxZwASIbAA6PGhA432J1qvVtwRAJaLkAJgiCkhAAAAQHIEFgAAAEByBBYAAABActayLKu6DwAAAAB9VFgAAAAAyRFYAAAAAMkRWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJEVgAAAAAyRFYAAAAAMlZy7Ks6j4AAAAA9FFhAQAAACRHYAEAAAAkR2ABAAAAJEdgAQAAACRHYAEAAAAkR2ABAAAAJEdgAQAAACRHYAEAAAAkZy3Lsqr7AAAAANBHhQUAAACQHIEFAAAAkByBBQAAAJAcgQUAAACQHIEFAAAAkByBBQAAAJAcgQUAAACQHIEFAAAAkJy1LMuq7gMAAABAHxUWAAAAQHIEFgAAAEByBBYAAABAcgQWAAAAQHIEFgAAAEByBBYAAABAcgQWAAAAQHIEFgAAAEBy1rIsq7oPAAAAAH1UWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJEVgAAAAAyVnLsqzqPgAAAAD0UWEBAAAAJEdgAQAAACRHYAEAAAAkR2ABAAAAJEdgAQAAACRHYAEAAAAkR2ABAAAAJEdgAQAAACRnLcuyqvsAAAAA0EeFBQAAAJAcgQUAAACQHIEFAAAAkByBBQAAAJAcgQUAAACQHIEFAAAAkByBBQAAAJAcgQUAAACQnLUsy6ruAwAAAEAfFRYAAABAcgQWAAAAQHIEFgAAAEByBBYAAABAcgQWAAAAQHIEFgAAAEByBBYAAABAcgQWAAAAQHLWsiyrug8AAAAAfVRYAAAAAMkRWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJEVgAAAAAyRFYAAAAAMkRWAAAAADJWcuyrOo+AAAAAPRRYQEAAAAkR2ABAAAAJEdgAQAAACRHYAEAAAAk5/8D0iZnr5m8FgMAAAAASUVORK5CYII=" alt="dsPIC audio V5 board, 3D render" width="1068" height="921"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">2.5</span>Audio board parts</h3>
+      <div>
+        <p class="cap">Table 2-2: <span>From <code>dsPIC audio V5 bom.csv</code> and schematic net labels</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Ref</th><th>Part</th><th>Use</th></tr></thead>
+          <tbody>
+          <tr><td class="k">J2, J3</td><td>SJ1-3523N 3.5 mm jack</td><td>LINE IN, OUT</td></tr>
+          <tr><td class="k">U1, U2</td><td>MCP6022 (MSOP-8)</td><td>Input buffer and output filter</td></tr>
+          <tr><td class="k">J1</td><td>2&times;10 right-angle socket</td><td>XPRO1 header: AD4AN0, AD4AN1, RB8_RP25, RB9_RP26, +3.3 V</td></tr>
+          <tr><td class="k">JP1</td><td>1&times;2 header &ldquo;MONO&rdquo;</td><td>Mono jumper</td></tr>
+          <tr><td class="k">R20, R21, R24, R25</td><td>10 &Omega;</td><td>DNP (not fitted)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="note"><strong>Design files</strong><p>Schematic: <code>dsPIC audio V5 schematic.pdf</code>. Interactive BOM: <code>bom/ibom.html</code>. Gerbers and drill files: <code>Artifacts/</code>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== 3 FIRMWARE -->
+<section class="page" id="firmware" role="tabpanel" aria-label="Firmware" hidden>
+  <div class="intro"><h2>Firmware Structure</h2><p>Module layers, start-up order, the main loop, and the interrupt priorities that keep the 48 kHz audio path free of OSP and LIN activity.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">3.1</span>Layer diagram</h3>
+    <div>
+      <p class="cap">Figure 3-1: <span>Firmware layers (<code>33a_audio_masters_2026.X</code>)</span></p>
+      <div class="layers">
+        <div class="layer"><div class="lname">Application</div><div class="cells">
+          <div class="cell"><b>audio_demo.c</b><small>main(), LIN_FrameHandler(), AudioTasks(), OSP_UpdateStrip()</small></div>
+        </div></div>
+        <div class="layer"><div class="lname">Control</div><div class="cells">
+          <div class="cell"><b>avas_ctrl.c</b><small>enable fade, RPM, throttle, blip</small></div>
+          <div class="cell"><b>indicator.c</b><small>tick timing, wave, parking strobe</small></div>
+          <div class="cell"><b>ref_engine.c</b><small>engine FIFO producer / consumer</small></div>
+          <div class="cell"><b>osp_audio_led.c</b><small>VU meter, LED style effects</small></div>
+        </div></div>
+        <div class="layer"><div class="lname">Synthesis</div><div class="cells">
+          <div class="cell"><b>engine_synth.c</b><small>engine_process(), EngineSynthWrap</small></div>
+          <div class="cell"><b>v8_engine.c, bullet_engine.c</b><small>old test sounds (USE_REF_ENGINE = 0)</small></div>
+          <div class="cell"><b>../audio_lib</b><small>effects, AVAS_MODE = 0 only</small></div>
+        </div></div>
+        <div class="layer"><div class="lname">Drivers</div><div class="cells">
+          <div class="cell"><b>adc_audio.c</b><small>ADC4 init, _AD4CH7Interrupt</small></div>
+          <div class="cell"><b>lin_slave.c</b><small>UART2, _U2RXInterrupt, parser</small></div>
+          <div class="cell"><b>osp_drv/</b><small>osp.c, osp_crc.c, osp_board.c</small></div>
+          <div class="cell"><b>user_interface.c, rgb_vu.c</b><small>TMR1 1 ms, switches, SCCP RGB</small></div>
+        </div></div>
+        <div class="layer"><div class="lname">MCC</div><div class="cells">
+          <div class="cell"><b>system/</b><small>clock, pins, interrupt, traps, dmt</small></div>
+          <div class="cell"><b>pwm_hs/</b><small>PWM_Initialize, _PWM3Interrupt</small></div>
+          <div class="cell"><b>osp_periph/</b><small>dma, spi2, spi4, delay</small></div>
+          <div class="cell"><b>adc/, uart/</b><small>adc5, uart1</small></div>
+        </div></div>
+        <div class="layer hw"><div class="lname">Hardware</div><div class="cells">
+          <div class="cell"><b>ADC4, ADC5</b><small>CH6/CH7, AD5AN0</small></div>
+          <div class="cell"><b>PWM PG3 / PG5</b><small>HREN, CLK5</small></div>
+          <div class="cell"><b>UART1, UART2</b><small>debug, LIN</small></div>
+          <div class="cell"><b>SPI2, SPI4, DMA2/3</b><small>CLK9 200 MHz</small></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">3.2</span>Start-up sequence</h3>
+      <div>
+        <p class="cap">Table 3-1: <span>Order in <code>main()</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>#</th><th>Call</th><th>Effect</th></tr></thead>
+          <tbody>
+          <tr><td class="num">1</td><td class="mono">SYSTEM_Initialize()</td><td>200 MHz clock, pins, UART1, ADC5, interrupt priorities</td></tr>
+          <tr><td class="num">2</td><td class="mono">TMR1Init(), NMBS_init()</td><td>1 ms tick; Modbus set up but not polled</td></tr>
+          <tr><td class="num">3</td><td>Print <code>RCON</code></td><td>Reset cause (POR, BOR, MCLR, SWR, WDTO, CM), then <code>RCON = 0</code></td></tr>
+          <tr><td class="num">4</td><td class="mono">AudioTasksInit()</td><td>Engines init, <code>RefEngine_Init()</code>, FIFO pre-fill</td></tr>
+          <tr><td class="num">5</td><td class="mono">OSP_Board_Init()</td><td>CRC, DMA, CLK9 &rarr; 200 MHz, SPI2/SPI4, RF11 TRIS = 1</td></tr>
+          <tr><td class="num">6</td><td>300 ms delay, <code>osp_init()</code></td><td>Strip supply settles, LEDs enumerated</td></tr>
+          <tr><td class="num">7</td><td class="mono">OSP_Audio_Init(), osp_GOACTIVE(0)</td><td>Audio LED mode then disabled</td></tr>
+          <tr><td class="num">8</td><td>Boot sweep</td><td>Blue <code>0x3FFF</code>, 10 ms per LED, forward then reverse</td></tr>
+          <tr><td class="num">9</td><td class="mono">PWM_Initialize(), ADC3_Initialize()</td><td>Audio starts (ADC4 path inside ADC3_Initialize)</td></tr>
+          <tr><td class="num">10</td><td class="mono">AVAS_Init(), Indicator_Init(), LIN_Slave_Init()</td><td>Engine off, LIN callback registered</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">3.3</span>Interrupt priorities</h3>
+      <div>
+        <p class="cap">Table 3-2: <span>Priorities as set in code</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Source</th><th>Priority</th><th>Rate</th><th>Work</th></tr></thead>
+          <tbody>
+          <tr><td class="k">PWM3 (<code>_PWM3Interrupt</code>)</td><td class="num">5</td><td class="num">192 kHz</td><td>Noise shaping, write PG5DC / PG3DC</td></tr>
+          <tr><td class="k">AD4CH7 (<code>_AD4CH7Interrupt</code>)</td><td class="num">4</td><td class="num">48 kHz</td><td>HPF, <code>AudioISR_Process()</code></td></tr>
+          <tr><td class="k">U2RX (<code>_U2RXInterrupt</code>)</td><td class="num">2</td><td>per byte</td><td>Drain FIFO into 64-entry ring buffer</td></tr>
+          <tr><td class="k">DMA0&ndash;DMA3</td><td class="num">1</td><td>per OSP frame</td><td>SPI2 TX / SPI4 RX</td></tr>
+          <tr><td class="k">T1 (<code>_T1Interrupt</code>)</td><td>not set</td><td class="num">1 kHz</td><td>ms counter, switch debounce</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="note warn"><strong>OSP frame start is atomic</strong><p><code>osp.c</code> disables interrupts for about 2 &micro;s around the DMA software trigger and <code>DISSDO = 0</code>. If the PWM3 or ADC ISR hits in that gap, the first Manchester bytes leave with SDO disabled and the LEDs drop the frame (CRC error).</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">3.4</span>Main loop</h3>
+    <div>
+      <p class="cap">Figure 3-2: <span>Initialisation and main loop flowchart</span></p>
+      <div class="fig"><svg viewBox="0 0 900 470" style="min-width:760px" role="img" aria-label="Main loop flowchart">
+        <defs><marker id="m32" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <!-- init column -->
+        <rect class="bx" x="60" y="20" width="260" height="40" rx="20"/><text class="c b" x="190" y="45">main()</text>
+        <rect class="bx" x="60" y="90" width="260" height="46"/><text class="c b" x="190" y="110">SYSTEM_Initialize, TMR1Init</text><text class="c s" x="190" y="127">NMBS_init, print RCON</text>
+        <rect class="bx" x="60" y="166" width="260" height="46"/><text class="c b" x="190" y="186">AudioTasksInit()</text><text class="c s" x="190" y="203">RefEngine_Init, RefEngine_Fill</text>
+        <rect class="bx" x="60" y="242" width="260" height="46"/><text class="c b" x="190" y="262">OSP start-up</text><text class="c s" x="190" y="279">Board_Init, 300 ms, osp_init, sweep</text>
+        <rect class="bx" x="60" y="318" width="260" height="46"/><text class="c b" x="190" y="338">Start audio and control</text><text class="c s" x="190" y="355">PWM, ADC, AVAS, Indicator, LIN</text>
+        <line class="ln" x1="190" y1="60" x2="190" y2="90" marker-end="url(#m32)"/>
+        <line class="ln" x1="190" y1="136" x2="190" y2="166" marker-end="url(#m32)"/>
+        <line class="ln" x1="190" y1="212" x2="190" y2="242" marker-end="url(#m32)"/>
+        <line class="ln" x1="190" y1="288" x2="190" y2="318" marker-end="url(#m32)"/>
+        <path class="ln" d="M190,364 V400 H420 V43 H500" marker-end="url(#m32)"/>
+        <!-- loop column -->
+        <rect class="bx" x="500" y="20" width="300" height="46"/><text class="c b" x="650" y="40">Every pass</text><text class="c s" x="650" y="57">RefEngine_Fill, LIN_Slave_Process, OSP_UpdateEffects</text>
+        <line class="ln" x1="650" y1="66" x2="650" y2="100" marker-end="url(#m32)"/>
+        <polygon class="bx" points="650,100 740,140 650,180 560,140"/><text class="c" x="650" y="137">1 ms</text><text class="c" x="650" y="153">elapsed?</text>
+        <path class="ln" d="M740,140 H850 V43 H800" marker-end="url(#m32)"/><text class="s" x="752" y="132">No</text>
+        <line class="ln" x1="650" y1="180" x2="650" y2="214" marker-end="url(#m32)"/><text class="s" x="660" y="202">Yes</text>
+        <rect class="bx" x="500" y="214" width="300" height="46"/><text class="c b" x="650" y="234">RPM update</text><text class="c s" x="650" y="251">pot &gt;&gt; 6, AVAS_Update, RefEngine_SetTargetRPM</text>
+        <line class="ln" x1="650" y1="260" x2="650" y2="290" marker-end="url(#m32)"/>
+        <rect class="bx" x="500" y="290" width="300" height="46"/><text class="c b" x="650" y="310">Indicator_Update(elapsed)</text><text class="c s" x="650" y="327">board LED mask, tick start</text>
+        <line class="ln" x1="650" y1="336" x2="650" y2="366" marker-end="url(#m32)"/>
+        <rect class="bx" x="500" y="366" width="300" height="46"/><text class="c b" x="650" y="386">OSP_UpdateStrip(now_ms)</text><text class="c s" x="650" y="403">LIN stats + FIFO underruns every 1 s</text>
+        <path class="ln" d="M650,412 V440 H850 V140"/>
+      </svg></div>
+      <div class="legend"><span>&#9645; Rounded = start</span><span>&#9645; Rectangle = process</span><span>&#9671; Diamond = decision</span><span>Return path joins the No branch</span></div>
+    </div>
+    <div class="note"><strong>Why Modbus is not polled</strong><p><code>nmbs_server_poll()</code> blocks up to 10 ms waiting for a byte. That made the 1 ms tasks run every ~10 ms (slow blip, late LIN response), so the AVAS loop calls only <code>RefEngine_Fill()</code>, <code>LIN_Slave_Process()</code> and <code>OSP_UpdateEffects()</code>. <code>RefEngine_Fill()</code> is called three times per pass to keep the FIFO full.</p></div>
+  </div>
+</section>
+
+<!-- =================================================================== 4 AUDIO PATH -->
+<section class="page" id="audio" role="tabpanel" aria-label="Audio Path" hidden>
+  <div class="intro"><h2>Audio Signal Path</h2><p>Line-in through ADC4 oversampling, sample processing in the 48 kHz ADC interrupt, and the 192 kHz high-resolution PWM output with first-order noise shaping.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">4.1</span>Signal chain</h3>
+    <div>
+      <p class="cap">Figure 4-1: <span>Sample path, input to output</span></p>
+      <div class="flow">
+        <div class="node"><b>ADC4 CH6 / CH7</b><small>RB4 / RB6, 256&times; OS, 16-bit</small></div>
+        <div class="link">48 kHz</div>
+        <div class="node hl"><b>_AD4CH7Interrupt</b><small>(x &minus; 32768) / 32768, 20 Hz HPF</small></div>
+        <div class="link">float</div>
+        <div class="node hl"><b>AudioTasks()</b><small>engine or LINE IN, + tick, clamp &plusmn;0.95</small></div>
+        <div class="link">&times;16650</div>
+        <div class="node hl"><b>_PWM3Interrupt</b><small>192 kHz, error feedback, dither</small></div>
+        <div class="link">PG5DC / PG3DC</div>
+        <div class="node"><b>RB8 / RB9</b><small>PWM5H / PWM3H &rarr; V5 filter</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">4.2</span>Timing</h3>
+    <div>
+      <p class="cap">Figure 4-2: <span>PWM, ADC trigger and ISR timing for one 48 kHz sample (ISR lengths not to scale)</span></p>
+      <div class="fig"><svg viewBox="0 0 940 260" style="min-width:760px" role="img" aria-label="Audio timing diagram">
+        <defs><marker id="m42" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <text class="e" x="250" y="47">PG3 cycle, 192.05 kHz</text>
+        <rect class="bx" x="270" y="30" width="80" height="26"/><rect class="bx" x="350" y="30" width="80" height="26"/><rect class="bx" x="430" y="30" width="80" height="26"/><rect class="bx" x="510" y="30" width="80" height="26"/>
+        <rect class="bx" x="590" y="30" width="80" height="26"/><rect class="bx" x="670" y="30" width="80" height="26"/><rect class="bx" x="750" y="30" width="80" height="26"/><rect class="bx" x="830" y="30" width="80" height="26"/>
+        <text class="c s" x="310" y="48">5.21 &micro;s</text>
+        <text class="e" x="250" y="97">ADC trigger, ADTR1PS 4:1</text>
+        <line class="ln" x1="270" y1="110" x2="270" y2="80" marker-end="url(#m42)"/><line class="ln" x1="590" y1="110" x2="590" y2="80" marker-end="url(#m42)"/>
+        <text class="s" x="278" y="96">TRIG</text><text class="s" x="598" y="96">TRIG</text>
+        <text class="e" x="250" y="147">ADC4 + _AD4CH7Interrupt (4)</text>
+        <rect class="gr" x="270" y="130" width="110" height="26"/><text class="c s" x="325" y="148">256&times; conv</text>
+        <rect class="hl" x="380" y="130" width="160" height="26"/><text class="c s" x="460" y="148">HPF + AudioTasks</text>
+        <rect class="gr" x="590" y="130" width="110" height="26"/><text class="c s" x="645" y="148">256&times; conv</text>
+        <rect class="hl" x="700" y="130" width="160" height="26"/><text class="c s" x="780" y="148">next sample</text>
+        <text class="e" x="250" y="197">_PWM3Interrupt (5)</text>
+        <rect class="hl" x="270" y="180" width="16" height="26"/><rect class="hl" x="350" y="180" width="16" height="26"/><rect class="hl" x="430" y="180" width="16" height="26"/><rect class="hl" x="510" y="180" width="16" height="26"/>
+        <rect class="hl" x="590" y="180" width="16" height="26"/><rect class="hl" x="670" y="180" width="16" height="26"/><rect class="hl" x="750" y="180" width="16" height="26"/><rect class="hl" x="830" y="180" width="16" height="26"/>
+        <line class="ln" x1="270" y1="232" x2="590" y2="232" marker-start="url(#m42)" marker-end="url(#m42)"/>
+        <text class="c s" x="430" y="252">1 audio sample = 4 PWM cycles = 20.83 &micro;s</text>
+      </svg></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">4.3</span>ADC input</h3>
+      <div>
+        <p class="cap">Table 4-1: <span>ADC4 set-up in <code>ADC3_Initialize()</code> (USE_XPRO1 branch)</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Field</th><th>CH6 (left)</th><th>CH7 (right)</th></tr></thead>
+          <tbody>
+          <tr><td class="k">PINSEL</td><td>0 (AD4AN0, RB4)</td><td>1 (AD4AN1, RB6)</td></tr>
+          <tr><td class="k">TRG1SRC</td><td>8 (PG3 ADC trigger 1)</td><td>8</td></tr>
+          <tr><td class="k">TRG2SRC</td><td>2 (immediate retrigger)</td><td>2</td></tr>
+          <tr><td class="k">MODE / ACCNUM</td><td>3 / 3 (oversampling, 256&times;)</td><td>3 / 3</td></tr>
+          <tr><td class="k">IRQSEL</td><td>1</td><td>1, <code>IEC7.AD4CH7IE = 1</code></td></tr>
+          <tr><td class="k">Scaling</td><td colspan="2"><code>hp_process(&amp;dc_block, (DATA &minus; 32768) / 32768)</code>, HPF 20 Hz at 48 kHz</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">4.4</span>PWM output</h3>
+      <div>
+        <p class="cap">Table 4-2: <span><code>PWM_Initialize()</code> and <code>PWM_DutyUpdateISR()</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+          <tbody>
+          <tr><td class="k">Master clock</td><td><code>PCLKCON.MCLKSEL = 1</code> (CLK5, 800 MHz), HREN</td></tr>
+          <tr><td class="k">Period</td><td><code>MPER = 66649</code> &rarr; 800 MHz &times; 16 / 66 650 = 192.05 kHz</td></tr>
+          <tr><td class="k">PG3CON / PG5CON</td><td><code>0x40000088</code> (independent edge, MPERSEL); PG3 <code>SOCS = 0</code>, PG5 <code>SOCS = 3</code></td></tr>
+          <tr><td class="k">PG3IOCON1 / PG5IOCON1</td><td><code>0x218</code> (PPSEN, independent, PENH only)</td></tr>
+          <tr><td class="k">ADC trigger</td><td><code>PGTRGSEL = 1</code>, <code>ADTR1PS = 3</code> (4:1), <code>ADTR1EN1 = 1</code></td></tr>
+          <tr><td class="k">Duty</td><td><code>DC = (int)(x &times; 16650 + err) + 33325 + noise</code>, x clamped &plusmn;0.90</td></tr>
+          <tr><td class="k">Dither</td><td><code>LFSR &amp; 0xF</code>, sign-extended &plusmn;8 LSB on duty and <code>MPER</code></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">4.5</span>Sample processing in AudioTasks()</h3>
+    <div>
+      <p class="cap">Table 4-3: <span>Per-sample steps in AVAS_MODE = 1</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Step</th><th>Phone (LINE IN)</th><th>Engine</th></tr></thead>
+        <tbody>
+        <tr><td class="k">Buttons</td><td colspan="2">SW1 toggles mode, SW2 toggles V8 / Bullet (engine mode only); debounce 2400 samples = 50 ms</td></tr>
+        <tr><td class="k">Source</td><td>Raw <code>AD4CH6DATA / AD4CH7DATA</code>, own DC tracker (start 30350, coeff 0.0001)</td><td><code>RefEngine_Sample()</code> &times; <code>AVAS_SampleGain()</code></td></tr>
+        <tr><td class="k">Filter</td><td>One-pole LPF, coeff 0.9</td><td>&mdash; (inside engine synth)</td></tr>
+        <tr><td class="k">Gate</td><td>Envelope coeff 0.001, threshold 0.005, gain ramps below it</td><td>&mdash;</td></tr>
+        <tr><td class="k">Gain / clamp</td><td>&times;3.5, clamp &plusmn;0.9</td><td>L = R = sample, clamp &plusmn;0.95</td></tr>
+        <tr><td class="k">OSP analyser</td><td>32-sample stereo block &rarr; <code>OSP_Audio_Process()</code></td><td>Zeros fed (no VU from engine)</td></tr>
+        <tr><td class="k">Indicator tick</td><td colspan="2"><code>Indicator_TickSample()</code> added after the analyser, clamp &plusmn;0.95 (tick never lights the VU)</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="note"><strong>PWM update order</strong><p><code>AudioISR_Process()</code> calls <code>SetPWMDuty()</code> with the previous sample first, then <code>AudioTasks()</code>. This keeps the time between <code>UPDREQ</code> and the PWM SOC window short; the cost is one sample of latency.</p></div>
+  </div>
+</section>
+
+<!-- =================================================================== 5 AVAS ENGINE -->
+<section class="page" id="avas" role="tabpanel" aria-label="AVAS Engine" hidden>
+  <div class="intro"><h2>AVAS Engine Sound</h2><p>The control layer turns LIN commands into a target RPM and a fade gain; the reference engine synth renders 32-sample blocks in the main loop into a FIFO that the audio ISR reads one sample at a time.</p></div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">5.1</span>Control parameters</h3>
+      <div>
+        <p class="cap">Table 5-1: <span><code>avas_ctrl.h</code> with <code>USE_REF_ENGINE = 1</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Define</th><th>Value</th><th>Meaning</th></tr></thead>
+          <tbody>
+          <tr><td class="mono">AVAS_RPM_IDLE</td><td class="num">900</td><td>Lowest RPM, fallback</td></tr>
+          <tr><td class="mono">AVAS_RPM_LIMIT</td><td class="num">5500</td><td>Highest RPM to synth</td></tr>
+          <tr><td class="mono">AVAS_GAIN_IDLE / FULL</td><td class="num">1.00 / 1.00</td><td>Throttle loudness off (engine does it)</td></tr>
+          <tr><td class="mono">AVAS_THROTTLE_RPM_LIFT</td><td class="num">0</td><td>No extra RPM from throttle</td></tr>
+          <tr><td class="mono">AVAS_THROTTLE_DEFAULT</td><td class="num">100</td><td>Until LIN 0x12 arrives</td></tr>
+          <tr><td class="mono">AVAS_FADE_MS</td><td class="num">50</td><td>Gain step 1 / (48 &times; 50) per sample</td></tr>
+          <tr><td class="mono">AVAS_LIN_TIMEOUT_MS</td><td class="num">0</td><td>LIN watchdog off</td></tr>
+          <tr><td class="mono">AVAS_BLIP_PEAK_RPM</td><td class="num">5000</td><td>Blip target, at least +800</td></tr>
+          <tr><td class="mono">ATTACK / HOLD / DECAY</td><td class="num">500 / 400 / 1300 ms</td><td>Curves x<sup>1.4</sup> / flat / x<sup>0.1</sup></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">5.2</span>Reference engine</h3>
+      <div>
+        <p class="cap">Table 5-2: <span><code>ref_engine.c</code> / <code>ref_engine.h</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Item</th><th>Value</th></tr></thead>
+          <tbody>
+          <tr><td class="k">Init</td><td><code>EngineSynthWrap_init(&amp;s, 48000, ENG_V8, 0, 1, 0.2, 2)</code></td></tr>
+          <tr><td class="k">Start values</td><td>RPM 0, throttle 0.3, <code>noise_mix = 0.055</code></td></tr>
+          <tr><td class="k">RPM slew</td><td><code>core.rpm_slew_per_s</code> (default 3000 RPM/s)</td></tr>
+          <tr><td class="k">Block</td><td class="num">32 samples (<code>REF_ENGINE_BLOCK</code>), left channel used</td></tr>
+          <tr><td class="k">FIFO</td><td class="num">32 blocks = 1024 floats = 4 KB = 21.3 ms</td></tr>
+          <tr><td class="k">Output gain</td><td><code>REF_ENGINE_OUT_GAIN = 1.0</code></td></tr>
+          <tr><td class="k">Underrun</td><td>Returns 0.0, counter printed as <code>[ENGINE] FIFO underruns</code></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="note"><strong>Why a FIFO</strong><p>One <code>engine_process()</code> block takes longer than one 20.8 &micro;s sample interrupt. The main loop is the only producer and the ISR the only consumer, so <code>fifo_wr</code> / <code>fifo_rd</code> need no lock. 21 ms covers the longest stall seen: printf at 115 200 baud costs ~87 &micro;s per character.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">5.3</span>Command sequence</h3>
+    <div>
+      <p class="cap">Figure 5-1: <span>AVAS ON, set 3000 RPM, then render (UML sequence)</span></p>
+      <div class="fig"><svg viewBox="0 0 1020 560" style="min-width:820px" role="img" aria-label="AVAS sequence diagram">
+        <defs>
+          <marker id="m51" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker>
+          <marker id="m51o" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#000" stroke-width="1.4"/></marker>
+        </defs>
+        <rect class="bx" x="20" y="10" width="120" height="44"/><text class="c b" x="80" y="37">HMI</text>
+        <rect class="bx" x="185" y="10" width="130" height="44"/><text class="c b" x="250" y="30">LIN slave</text><text class="c s" x="250" y="46">UART2 ISR + parser</text>
+        <rect class="bx" x="360" y="10" width="140" height="44"/><text class="c b" x="430" y="30">Frame handler</text><text class="c s" x="430" y="46">audio_demo.c</text>
+        <rect class="bx" x="545" y="10" width="130" height="44"/><text class="c b" x="610" y="37">avas_ctrl</text>
+        <rect class="bx" x="715" y="10" width="130" height="44"/><text class="c b" x="780" y="30">ref_engine</text><text class="c s" x="780" y="46">FIFO</text>
+        <rect class="bx" x="880" y="10" width="120" height="44"/><text class="c b" x="940" y="30">Audio ISR</text><text class="c s" x="940" y="46">48 kHz</text>
+        <line class="ll" x1="80" y1="54" x2="80" y2="545"/><line class="ll" x1="250" y1="54" x2="250" y2="545"/><line class="ll" x1="430" y1="54" x2="430" y2="545"/>
+        <line class="ll" x1="610" y1="54" x2="610" y2="545"/><line class="ll" x1="780" y1="54" x2="780" y2="545"/><line class="ll" x1="940" y1="54" x2="940" y2="545"/>
+        <!-- AVAS ON -->
+        <line class="ln" x1="80" y1="90" x2="250" y2="90" marker-end="url(#m51)"/><text class="c s m" x="165" y="82">55 E2 10 00 00 01 EE</text>
+        <line class="ln" x1="250" y1="125" x2="430" y2="125" marker-end="url(#m51)"/><text class="c s" x="340" y="117">LIN_FrameHandler(frame)</text>
+        <line class="ln" x1="430" y1="160" x2="610" y2="160" marker-end="url(#m51)"/><text class="c s" x="520" y="152">AVAS_SetEnable(true)</text>
+        <rect class="nt" x="345" y="178" width="170" height="40"/><text class="c s" x="430" y="194">audio_mode = ENGINE</text><text class="c s" x="430" y="210">OSP_Audio_Enable(false)</text>
+        <!-- RPM -->
+        <line class="ln" x1="80" y1="250" x2="250" y2="250" marker-end="url(#m51)"/><text class="c s m" x="165" y="242">55 E2 11 0B B8 00 2B</text>
+        <line class="ln" x1="250" y1="285" x2="430" y2="285" marker-end="url(#m51)"/><text class="c s" x="340" y="277">LIN_FrameHandler(frame)</text>
+        <line class="ln" x1="430" y1="320" x2="610" y2="320" marker-end="url(#m51)"/><text class="c s" x="520" y="312">AVAS_SetTargetRPM(3000)</text>
+        <rect class="nt" x="625" y="300" width="150" height="40"/><text class="c s" x="700" y="316">lin_controlled = true</text><text class="c s" x="700" y="332">pot ignored</text>
+        <!-- 1 ms loop -->
+        <rect class="fr" x="560" y="360" width="290" height="70"/>
+        <path class="fr" d="M560,360 H700 V372 L690,382 H560 Z"/><text class="s" x="566" y="376">loop [every 1 ms]</text>
+        <line class="ln" x1="610" y1="408" x2="780" y2="408" marker-end="url(#m51)"/><text class="c s" x="695" y="400">RefEngine_SetTargetRPM()</text>
+        <!-- 48 kHz loop -->
+        <rect class="fr" x="725" y="450" width="285" height="88"/>
+        <path class="fr" d="M725,450 H855 V462 L845,472 H725 Z"/><text class="s" x="731" y="466">loop [48 kHz]</text>
+        <line class="ln" x1="940" y1="492" x2="780" y2="492" marker-end="url(#m51)"/><text class="c s" x="860" y="486">RefEngine_Sample()</text>
+        <line class="ln ds" x1="780" y1="522" x2="940" y2="522" marker-end="url(#m51o)"/><text class="c s" x="860" y="516">sample &times; SampleGain</text>
+      </svg></div>
+      <div class="legend"><span>Solid arrow = message / call</span><span>Dashed arrow = return</span><span>Yellow box = local action</span><span>Frame = loop fragment</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">5.4</span>Blip envelope</h3>
+    <div>
+      <p class="cap">Figure 5-2: <span>RPM after LIN 0x13 from 1500 RPM, computed from <code>blip_update()</code></span></p>
+      <div class="fig"><svg viewBox="0 0 800 320" style="min-width:640px" role="img" aria-label="Blip envelope">
+        <defs><marker id="m54" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <line class="ln" x1="40" y1="260" x2="770" y2="260" marker-end="url(#m54)"/>
+        <line class="ll" x1="40" y1="69" x2="760" y2="69"/><text class="e s" x="760" y="62">AVAS_BLIP_PEAK_RPM 5000</text>
+        <line class="ll" x1="40" y1="203" x2="760" y2="203"/><text class="e s" x="760" y="196">target 1500</text>
+        <line class="ll" x1="220" y1="60" x2="220" y2="260"/><line class="ll" x1="340" y1="60" x2="340" y2="260"/><line class="ll" x1="730" y1="60" x2="730" y2="260"/>
+        <polyline class="ln" style="stroke-width:2.2" points="40,203 70,203 76,201 82,199 88,196 94,192 100,189 106,185 112,180 118,176 124,171 130,166 136,160 142,155 148,149 154,143 160,137 166,131 172,125 178,118 184,112 190,105 196,98 202,91 208,84 214,77 220,69 226,69 232,69 238,69 244,69 250,69 256,69 262,69 268,69 274,69 280,69 286,69 292,69 298,69 304,69 310,69 316,69 322,69 328,69 334,69 340,69 346,157 352,163 358,167 364,170 370,172 376,174 382,176 388,177 394,179 400,180 406,181 412,182 418,183 424,184 430,185 436,185 442,186 448,187 454,187 460,188 466,188 472,189 478,190 484,190 490,191 496,191 502,191 508,192 514,192 520,193 526,193 532,194 538,194 544,194 550,195 556,195 562,195 568,196 574,196 580,196 586,197 592,197 598,197 604,198 610,198 616,198 622,198 628,199 634,199 640,199 646,200 652,200 658,200 664,200 670,201 676,201 682,201 688,201 694,201 700,202 706,202 712,202 718,202 724,203 730,203"/>
+        <text class="c s" x="70" y="278">0</text><text class="c s" x="220" y="278">500</text><text class="c s" x="340" y="278">900</text><text class="c s" x="730" y="278">2200 ms</text>
+        <text class="c s" x="145" y="302">Attack x&sup1;&middot;&#8308;</text><text class="c s" x="280" y="302">Hold</text><text class="c s" x="535" y="302">Decay x&#8304;&middot;&sup1;, back to live target</text>
+      </svg></div>
+    </div>
+    <div class="note"><strong>Blip rules</strong><p>Ignored while AVAS is off. A new blip restarts from the current RPM, so re-triggering mid-blip is smooth. The decay returns to the live target, so RPM changes during decay are followed. <code>AVAS_IsBlipRising()</code> (attack + hold) drives the white flash of the tachometer when it is enabled.</p></div>
+  </div>
+</section>
+
+<!-- =================================================================== 6 LED CONTROL -->
+<section class="page" id="leds" role="tabpanel" aria-label="LED Control" hidden>
+  <div class="intro"><h2>OSP LED Control</h2><p>Who owns the strip at each moment, how the indicator wave and parking strobe are drawn, and the VU meter and LED style effects that run in phone mode.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">6.1</span>Strip priority</h3>
+    <div>
+      <p class="cap">Figure 6-1: <span><code>OSP_UpdateStrip()</code> decision flow (1 ms) and <code>OSP_UpdateEffects()</code> (every pass)</span></p>
+      <div class="fig"><svg viewBox="0 0 820 560" style="min-width:660px" role="img" aria-label="Strip priority flowchart">
+        <defs><marker id="m61" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <rect class="bx" x="80" y="10" width="240" height="40" rx="20"/><text class="c b" x="200" y="35">OSP_UpdateStrip(now_ms)</text>
+        <line class="ln" x1="200" y1="50" x2="200" y2="80" marker-end="url(#m61)"/>
+        <polygon class="bx" points="200,80 310,120 200,160 90,120"/><text class="c" x="200" y="117">Indicator</text><text class="c" x="200" y="133">active?</text>
+        <line class="ln" x1="310" y1="120" x2="460" y2="120" marker-end="url(#m61)"/><text class="s" x="325" y="112">Yes</text>
+        <rect class="hl" x="460" y="96" width="330" height="48"/><text class="c b" x="625" y="116">Yellow wave or parking strobe</text><text class="c s" x="625" y="134">Indicator_OspStep, parking re-sent every 25 ms</text>
+        <line class="ln" x1="200" y1="160" x2="200" y2="196" marker-end="url(#m61)"/><text class="s" x="210" y="183">No</text>
+        <polygon class="bx" points="200,196 330,240 200,284 70,240"/><text class="c s" x="200" y="236">AVAS on, ENGINE mode,</text><text class="c s" x="200" y="252">TACHOMETER = 1?</text>
+        <line class="ln" x1="330" y1="240" x2="460" y2="240" marker-end="url(#m61)"/><text class="s" x="342" y="232">Yes</text>
+        <rect class="gr" x="460" y="216" width="330" height="48"/><text class="c b" x="625" y="236">OSP_Avas_UpdateLEDs (tachometer)</text><text class="c s" x="625" y="254">Not active: ENGINE_OSP_TACHOMETER = 0</text>
+        <line class="ln" x1="200" y1="284" x2="200" y2="320" marker-end="url(#m61)"/><text class="s" x="210" y="307">No</text>
+        <rect class="bx" x="70" y="320" width="260" height="48"/><text class="c b" x="200" y="340">osp_effects_active = true</text><text class="c s" x="200" y="358">main loop: OSP_Audio_UpdateLEDs()</text>
+        <line class="ln" x1="200" y1="368" x2="200" y2="400" marker-end="url(#m61)"/>
+        <polygon class="bx" points="200,400 310,440 200,480 90,440"/><text class="c" x="200" y="437">Sync</text><text class="c" x="200" y="453">mode?</text>
+        <line class="ln" x1="310" y1="440" x2="460" y2="440" marker-end="url(#m61)"/><text class="s" x="322" y="432">STATIC</text>
+        <rect class="bx" x="460" y="416" width="330" height="48"/><text class="c b" x="625" y="436">render_static_effects()</text><text class="c s" x="625" y="454">every 10th call (STATIC_EFFECT_DIVIDER)</text>
+        <path class="ln" d="M200,480 V520 H460" marker-end="url(#m61)"/><text class="s" x="232" y="512">SYNCHRONIZED</text>
+        <rect class="bx" x="460" y="496" width="330" height="48"/><text class="c b" x="625" y="516">render_vu_meter()</text><text class="c s" x="625" y="534">when update_pending (every 8 blocks)</text>
+      </svg></div>
+      <div class="legend"><span>&#9645; Rounded = start</span><span>&#9645; Rectangle = process</span><span>&#9671; Diamond = decision</span><span>Grey = disabled at compile time</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">6.2</span>Indicator on the strip</h3>
+    <div>
+      <p class="cap">Figure 6-2: <span>Fixed split at LED 21 (<code>OSP_DrawIndicatorWave()</code>), example: right wave at pos = 5</span></p>
+      <div class="fig"><svg viewBox="0 0 900 150" style="min-width:760px" role="img" aria-label="Indicator split">
+        <defs><marker id="m62" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+        <rect x="31" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="51" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="71" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="91" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="111" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="131" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="151" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="171" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="191" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="211" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="231" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="251" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="271" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="291" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="311" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="331" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="351" y="40" width="16" height="28" style="fill:#f7c600;stroke:#000;stroke-width:1.2"/>
+        <rect x="371" y="40" width="16" height="28" style="fill:#f7c600;stroke:#000;stroke-width:1.2"/>
+        <rect x="391" y="40" width="16" height="28" style="fill:#f7c600;stroke:#000;stroke-width:1.2"/>
+        <rect x="411" y="40" width="16" height="28" style="fill:#f7c600;stroke:#000;stroke-width:1.2"/>
+        <rect x="431" y="40" width="16" height="28" style="fill:#f7c600;stroke:#000;stroke-width:1.2"/>
+        <rect x="451" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="471" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="491" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="511" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="531" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="551" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="571" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="591" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="611" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="631" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="651" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="671" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="691" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="711" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="731" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="751" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="771" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="791" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="811" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="831" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <rect x="851" y="40" width="16" height="28" style="fill:#ffffff;stroke:#000;stroke-width:1.2"/>
+        <text class="c s" x="39" y="32">1</text><text class="c s" x="439" y="32">21</text><text class="c s" x="459" y="32">22</text><text class="c s" x="859" y="32">42</text>
+        <line class="ln ds" x1="449" y1="20" x2="449" y2="80"/>
+        <line class="ln" x1="440" y1="92" x2="40" y2="92" marker-end="url(#m62)"/><text class="c s" x="240" y="112">IND_RIGHT (0x21): LED 21 &rarr; 1</text>
+        <line class="ln" x1="460" y1="92" x2="860" y2="92" marker-end="url(#m62)"/><text class="c s" x="660" y="112">IND_LEFT (0x20): LED 22 &rarr; N</text>
+        <text class="c s" x="450" y="138">Parking (0x22): broadcast address 0, all LEDs on / off</text>
+      </svg></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">6.3</span>Indicator timing</h3>
+      <div>
+        <p class="cap">Table 6-1: <span><code>indicator.h</code>, <code>audio_demo.c</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Item</th><th>Value</th></tr></thead>
+          <tbody>
+          <tr><td class="k">Left / right tick</td><td class="num">every 700 ms (<code>IND_INTERVAL_MS</code>)</td></tr>
+          <tr><td class="k">Wave step</td><td class="num">25 ms (<code>IND_LED_STEP_MS</code>)</td></tr>
+          <tr><td class="k">Wave width</td><td>5 LEDs on strip, 3 on board bar</td></tr>
+          <tr><td class="k">Parking</td><td class="num">toggle every 500 ms, tick on each ON</td></tr>
+          <tr><td class="k">Colour</td><td>R <code>0x3FFF</code>, G <code>0x2800</code>, B <code>0x0000</code></td></tr>
+          <tr><td class="k">Tick sound</td><td><code>notif_action_i16</code> (48 kHz int16), &minus;12 dB</td></tr>
+          <tr><td class="k">Tick restart</td><td>Old tick faded over 480 samples (10 ms) first</td></tr>
+          <tr><td class="k">On OFF</td><td>Strip cleared, <code>OSP_Audio_Enable(false)</code></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">6.4</span>LED style effects</h3>
+      <div>
+        <p class="cap">Table 6-2: <span>LIN 0x08, <code>osp_audio_led.c</code></span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>D3</th><th>Effect</th><th>Behaviour</th></tr></thead>
+          <tbody>
+          <tr><td class="num">0</td><td class="k">STATIC</td><td>User RGB on LEDs 1..N</td></tr>
+          <tr><td class="num">1</td><td class="k">GRADUAL</td><td>All LEDs one hue, step 0.0004 &times; N/42</td></tr>
+          <tr><td class="num">2</td><td class="k">CROSSFADE</td><td>Rainbow across strip, step 0.001 &times; N/42</td></tr>
+          <tr><td class="num">3</td><td class="k">STROBE</td><td>User RGB, 30 on / 30 off frames &times; 42/N</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="note"><strong>Colour scaling</strong><p>8-bit RGB &rarr; <code>(c &lt;&lt; 6) | (c &gt;&gt; 2)</code>, then &times; (brightness + 1) / 256, limit <code>0x3FFF</code>. Default colour 255 / 100 / 0, brightness 255.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">6.5</span>VU meter (SYNCHRONIZED)</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Stage</th><th>Detail</th></tr></thead>
+      <tbody>
+      <tr><td class="k">Input</td><td>32-sample stereo blocks from <code>AudioTasks()</code>, LINE IN only (1500 blocks/s)</td></tr>
+      <tr><td class="k">Bands</td><td>One-pole LPF alpha 0.044196 (&asymp;345 Hz) and 0.208247 (&asymp;1.8 kHz); comments say 500 Hz / 2 kHz</td></tr>
+      <tr><td class="k">Refresh</td><td><code>LED_UPDATE_DIVIDER = 8</code> &rarr; 187.5 Hz, SPI only from main loop</td></tr>
+      <tr><td class="k">Level</td><td>Dominant band energy &times; LEDs per side &times; 1.2, gate <code>MIN_TOTAL_ENERGY = 0.03</code></td></tr>
+      <tr><td class="k">Pattern</td><td>LIN 0x02: CENTER (<code>PATTERN_FROM_MIDDLE</code>) or EDGE (<code>PATTERN_FROM_EDGES</code>)</td></tr>
+      <tr><td class="k">Beat</td><td>White flash: energy &gt; 0.35 and &gt; 2.2 &times; history (decay 0.92), hold 20 frames</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- =================================================================== 7 LIN -->
+<section class="page" id="lin" role="tabpanel" aria-label="LIN Protocol" hidden>
+  <div class="intro"><h2>LIN Protocol</h2><p>Receive-only LIN slave on UART2: one frame ID with four data bytes, signal ID in D0 and values in D1 to D3, classic checksum.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">7.1</span>Frame layout</h3>
+    <div>
+      <p class="cap">Figure 7-1: <span>Frame <code>LIN_ID_SG_GCM_02</code> (ID 0x22, PID 0xE2)</span></p>
+      <div class="bytes">
+        <div class="byte sf"><b>BREAK</b><small>&ge;13 bit, FERIF</small></div>
+        <div class="byte sf"><b>0x55</b><small>SYNC</small></div>
+        <div class="byte"><b>0xE2</b><small>PID (ID 0x22)</small></div>
+        <div class="byte pl"><b>D0</b><small>Signal ID</small></div>
+        <div class="byte pl"><b>D1</b><small>value / R / RPM_H</small></div>
+        <div class="byte pl"><b>D2</b><small>value / G / RPM_L</small></div>
+        <div class="byte pl"><b>D3</b><small>value / B</small></div>
+        <div class="byte sf"><b>CHK</b><small>classic, data only</small></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="tbl"><table>
+        <thead><tr><th>UART2 setting</th><th>Value</th></tr></thead>
+        <tbody>
+        <tr><td class="k">Baud</td><td><code>U2BRG = 100 MHz / 115200 = 868</code> &rarr; 115 207</td></tr>
+        <tr><td class="k">Registers</td><td><code>U2CON = 0x8000000</code>, <code>U2STAT = 0x2E0080</code> (RXWM = 0)</td></tr>
+        <tr><td class="k">RX</td><td>ISR priority 2, 64-entry ring buffer, bit 8 = framing error</td></tr>
+        <tr><td class="k">Data length</td><td>ID 0x00&ndash;0x1F: 2, 0x20&ndash;0x2F: 4, 0x30&ndash;0x3F: 8</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Parser state</th><th>Next on</th></tr></thead>
+        <tbody>
+        <tr><td class="mono">LIN_STATE_IDLE</td><td>0x00 &rarr; BREAK; 0x55 &rarr; SYNC</td></tr>
+        <tr><td class="mono">LIN_STATE_BREAK</td><td>0x55 &rarr; SYNC; other non-zero &rarr; IDLE</td></tr>
+        <tr><td class="mono">LIN_STATE_SYNC</td><td>PID parity OK &rarr; DATA, else error &rarr; IDLE</td></tr>
+        <tr><td class="mono">LIN_STATE_DATA</td><td>after <code>data_len</code> bytes &rarr; CHECKSUM</td></tr>
+        <tr><td class="mono">LIN_STATE_CHECKSUM</td><td>match &rarr; callback; always &rarr; IDLE</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="note"><strong>Break handling</strong><p>A byte 0x00 with the framing error flag always restarts a frame, even in the middle of one. Every valid frame calls <code>AVAS_LinAlive()</code>; frames with another ID are logged and ignored.</p></div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">7.2</span>Signal table</h3>
+    <div>
+      <p class="cap">Table 7-1: <span><code>LIN_FrameHandler()</code> in <code>audio_demo.c</code></span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>D0</th><th>Signal</th><th>Payload</th><th>Firmware action</th></tr></thead>
+        <tbody>
+        <tr><td class="mono">0x01</td><td class="k">LED power</td><td>D3: 0 = ON, 1 = OFF</td><td>ON: <code>OSP_SwitchToLedDemo()</code>; OFF: audio LED off, strip cleared</td></tr>
+        <tr><td class="mono">0x02</td><td class="k">Pattern</td><td>D3: 0 = CENTER, 1 = EDGE</td><td>LED demo, SYNCHRONIZED mode</td></tr>
+        <tr><td class="mono">0x03</td><td class="k">Number of LEDs</td><td>D3 (firmware adds 1)</td><td><code>OSP_Audio_SetNumLEDs(D3 + 1)</code>, clamped to detected</td></tr>
+        <tr><td class="mono">0x05</td><td class="k">Source</td><td>D3: 0 = LINE, 1 = MIC</td><td>SYNCHRONIZED; both use ADC LINE IN</td></tr>
+        <tr><td class="mono">0x08</td><td class="k">LED style effect</td><td>D3: 0&ndash;3</td><td>STATIC mode + effect (Table 6-2)</td></tr>
+        <tr><td class="mono">0x09</td><td class="k">RGB colour</td><td>D1 = R, D2 = G, D3 = B</td><td><code>OSP_Audio_SetRGBColor()</code></td></tr>
+        <tr><td class="mono">0x0A</td><td class="k">Brightness</td><td>D3: 0&ndash;100 %</td><td>&times; 255 / 100</td></tr>
+        <tr><td class="mono">0x10</td><td class="k">AVAS enable</td><td>D3: 1 = ON</td><td>Fade in, ENGINE mode, audio LED off</td></tr>
+        <tr><td class="mono">0x11</td><td class="k">RPM</td><td>D1 = high, D2 = low</td><td>Clamped 900&ndash;5500, pot ignored afterwards</td></tr>
+        <tr><td class="mono">0x12</td><td class="k">Throttle</td><td>D3: 0&ndash;100 %</td><td><code>RefEngine_SetThrottle(D3 / 100)</code></td></tr>
+        <tr><td class="mono">0x13</td><td class="k">Blip</td><td>D3 = 1</td><td>Envelope (Figure 5-2), only when AVAS on</td></tr>
+        <tr><td class="mono">0x14</td><td class="k">Engine type</td><td>D3: 0 = V8, 1 = Bullet</td><td>Sets <code>engine_type</code>; no effect with <code>USE_REF_ENGINE = 1</code></td></tr>
+        <tr><td class="mono">0x15</td><td class="k">Audio source</td><td>D3: 0 = Engine, 1 = LINE IN</td><td>Sets <code>audio_mode</code></td></tr>
+        <tr><td class="mono">0x20 / 0x21 / 0x22</td><td class="k">Left / Right / Parking</td><td>D3: 0 / 1</td><td>Mutually exclusive; unchanged repeats ignored</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="sec">
+      <h3><span class="n">7.3</span>Example frames</h3>
+      <div>
+        <p class="cap">Table 7-2: <span>Bytes after the break (checksum computed with <code>LIN_Calculate_Checksum(..., false)</code>)</span></p>
+        <div class="tbl"><table>
+          <thead><tr><th>Command</th><th>Frame</th></tr></thead>
+          <tbody>
+          <tr><td class="k">AVAS ON</td><td class="mono">55 E2 10 00 00 01 EE</td></tr>
+          <tr><td class="k">RPM 3000</td><td class="mono">55 E2 11 0B B8 00 2B</td></tr>
+          <tr><td class="k">Throttle 50 %</td><td class="mono">55 E2 12 00 00 32 BB</td></tr>
+          <tr><td class="k">Blip</td><td class="mono">55 E2 13 00 00 01 EB</td></tr>
+          <tr><td class="k">Left indicator ON</td><td class="mono">55 E2 20 00 00 01 DE</td></tr>
+          <tr><td class="k">Parking ON</td><td class="mono">55 E2 22 00 00 01 DC</td></tr>
+          <tr><td class="k">LED power ON</td><td class="mono">55 E2 01 00 00 00 FE</td></tr>
+          <tr><td class="k">Crossfade</td><td class="mono">55 E2 08 00 00 02 F5</td></tr>
+          <tr><td class="k">RGB 255 100 0</td><td class="mono">55 E2 09 FF 64 00 92</td></tr>
+          <tr><td class="k">LINE IN source</td><td class="mono">55 E2 15 00 00 01 E9</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3><span class="n">7.4</span>Frame builder</h3>
+      <div class="builder">
+        <div class="row">
+          <label>Signal (D0)
+            <select id="fb-id">
+              <option value="1">0x01 LED power</option><option value="2">0x02 Pattern</option><option value="3">0x03 Number of LEDs</option>
+              <option value="5">0x05 Source</option><option value="8">0x08 LED style effect</option><option value="9">0x09 RGB colour</option>
+              <option value="10">0x0A Brightness</option><option value="16" selected>0x10 AVAS enable</option><option value="17">0x11 RPM</option>
+              <option value="18">0x12 Throttle</option><option value="19">0x13 Blip</option><option value="20">0x14 Engine type</option>
+              <option value="21">0x15 Audio source</option><option value="32">0x20 Left indicator</option><option value="33">0x21 Right indicator</option>
+              <option value="34">0x22 Parking indicator</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label>D1 (0&ndash;255)<input id="fb-d1" inputmode="numeric" value="0"></label>
+          <label>D2 (0&ndash;255)<input id="fb-d2" inputmode="numeric" value="0"></label>
+          <label>D3 (0&ndash;255)<input id="fb-d3" inputmode="numeric" value="1"></label>
+        </div>
+        <div class="row">
+          <label>RPM helper (fills D1 / D2)<input id="fb-rpm" inputmode="numeric" placeholder="e.g. 3000"></label>
+          <button class="btn" id="fb-copy" type="button">Copy frame</button>
+        </div>
+        <div class="out" id="fb-out" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== 8 BUILD -->
+<section class="page" id="build" role="tabpanel" aria-label="Build &amp; Config" hidden>
+  <div class="intro"><h2>Build &amp; Configuration</h2><p>MPLAB X project settings, folder layout, compile-time switches and their current state, and the RAM and stack limits to watch.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">8.1</span>Project</h3>
+    <div>
+      <p class="cap">Table 8-1: <span><code>nbproject/configurations.xml</code></span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Configuration</th><th>Device</th><th>Toolchain</th><th>Debug tool</th><th>Pack</th><th>Linker</th></tr></thead>
+        <tbody>
+        <tr><td class="k mono">33AK512MPS512</td><td>dsPIC33AK512MPS512</td><td>XC-DSC 4.00</td><td>PKOB4 (pkob4hybrid)</td><td>dsPIC33AK-MP_DFP 1.3.185</td><td>linker stack on, stack guard 16</td></tr>
+        <tr><td class="k mono">33AK256MPS306</td><td>dsPIC33AK256MPS306</td><td>XC-DSC 4.00</td><td>PKOB4 (pkob4hybrid)</td><td>dsPIC33AK-MP_DFP 1.3.185</td><td>same; uses <code>#if __dsPIC33AK256MPS306__</code> branches</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="note"><strong>Build in MPLAB X</strong><p>Open <code>Without_codec/33a_audio_masters_2026.X</code> and select configuration <code>33AK512MPS512</code>. Keep <code>firmware/</code> next to <code>Without_codec/</code>: <code>indicator.c</code> includes <code>../../firmware/audio/notif_action_int16.h</code>.</p></div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">8.2</span>Folder layout</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Path</th><th>Content</th></tr></thead>
+      <tbody>
+      <tr><td class="k mono">33a_audio_masters_2026.X/</td><td>Project and all AVAS / OSP / LIN sources (<code>audio_demo.c</code> = main)</td></tr>
+      <tr><td class="k mono">audio_lib/</td><td>Reverb, delay, phaser, wah, tremolo, distortion, Hammond, biquads (effects demo, AVAS_MODE = 0)</td></tr>
+      <tr><td class="k mono">modbus_lib/</td><td>nanoMODBUS RTU server for the effects demo GUI</td></tr>
+      <tr><td class="k mono">pmu_lib/</td><td>CPU load counters (<code>ENABLE_PMU</code> / <code>DISABLE_PMU</code>)</td></tr>
+      <tr><td class="k mono">demo_gui/, demo_gui_touchscr/</td><td>PC effects GUI and Soundboard (Git LFS executables)</td></tr>
+      <tr><td class="k mono">pcb/dsPIC audio V5/</td><td>KiCad project, schematic PDF, BOM, Gerbers</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">8.3</span>Compile-time switches</h3>
+    <div>
+      <p class="cap">Table 8-2: <span>Current state in the source</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>Switch</th><th>File</th><th>State</th><th>Effect</th></tr></thead>
+        <tbody>
+        <tr><td class="mono">AVAS_MODE</td><td>audio_demo.c</td><td>1</td><td>LIN / AVAS / OSP build; 0 = Modbus effects demo</td></tr>
+        <tr><td class="mono">USE_OSP_LEDS</td><td>audio_demo.c</td><td>1</td><td>OSP strip driver and screens</td></tr>
+        <tr><td class="mono">ENGINE_OSP_TACHOMETER</td><td>audio_demo.c</td><td>0</td><td>No RPM bar on strip</td></tr>
+        <tr><td class="mono">ENGINE_BOARD_BARGRAPH / _RGB_VU</td><td>audio_demo.c</td><td>0 / 0</td><td>Board LEDs do not follow the engine</td></tr>
+        <tr><td class="mono">LIN_DEBUG</td><td>audio_demo.c</td><td>1</td><td>Print each LIN signal on UART1</td></tr>
+        <tr><td class="mono">LIN_DEBUG_RAW</td><td>lin_slave.h</td><td>0</td><td>Byte-level LIN log</td></tr>
+        <tr><td class="mono">USE_REF_ENGINE</td><td>avas_ctrl.h</td><td>1</td><td>osp/firmware engine via FIFO</td></tr>
+        <tr><td class="mono">NO_CODEC</td><td>adc_audio.h</td><td>defined</td><td>No SPI1/I2C/DMA codec, PWM free-running</td></tr>
+        <tr><td class="mono">USE_XPRO1</td><td>adc_audio.h</td><td>defined</td><td>ADC4 RB4/RB6 in, PWM on RB8/RB9</td></tr>
+        <tr><td class="mono">PWM_NOISE_SHAPING</td><td>adc_audio.h</td><td>defined</td><td>192 kHz error feedback in PWM3 ISR</td></tr>
+        <tr><td class="mono">ADC_USE_PWM_TRIG</td><td>adc_audio.h</td><td>defined</td><td>ADC triggered by PG3</td></tr>
+        <tr><td class="mono">RGB_VU_METER</td><td>adc_audio.h</td><td>defined</td><td>SCCP1&ndash;3 on RGB LED (process call gated off)</td></tr>
+        <tr><td class="mono">FIR_DECIMATION, ADC_NO_OVERSAMPLE, ADC_CIC(_DEMO)</td><td>adc_audio.h</td><td>off</td><td>Other ADC modes</td></tr>
+        <tr><td class="mono">CENTER_ALIGNED_PWM, NO_PWM_DITHER</td><td>adc_audio.h</td><td>off</td><td>Trailing edge with dither</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">8.4</span>RAM and stack</h3>
+    <div class="grid2">
+      <div class="tbl"><table>
+        <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+        <tbody>
+        <tr><td class="k">RAM</td><td class="num">64 KB data space</td></tr>
+        <tr><td class="k">Shared union</td><td><code>fx_shared_ram</code>: Reverb_t (19.6 KB) and UnifiedDelay_t (19.3 KB) share one area in AVAS_MODE</td></tr>
+        <tr><td class="k">Engine FIFO</td><td class="num">4 KB static + 2 &times; 256 B block buffers (static, not stack)</td></tr>
+        <tr><td class="k">Before the union</td><td>Stack only 696 bytes with USE_REF_ENGINE, overflow &rarr; trap &rarr; reset loop</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note warn"><strong>Check the map file after every change</strong><p>A stack overflow shows as an endless reset with <code>RCON = 0x40</code> (SW reset from <code>traps.c</code>). The start-up banner prints the reset cause on UART1.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== 9 STATUS -->
+<section class="page" id="status" role="tabpanel" aria-label="Status" hidden>
+  <div class="intro"><h2>Status &amp; Open Issues</h2><p>Working state of the codec-less port, fixes that must stay in place, and findings from a review of the source.</p></div>
+
+  <div class="sec">
+    <h3><span class="n">9.1</span>Feature status</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Item</th><th>Status</th></tr></thead>
+      <tbody>
+      <tr><td>ADC line-in and 192 kHz PWM line-out with noise shaping</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td>LIN slave on XPRO2 with ring buffer, same command set as codec board</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td>Reference engine sound through main-loop FIFO</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td>OSP strip: auto-detect, boot sweep, VU meter, 4 LED style effects</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td>Left / right / parking indicators with tick sound</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td>AVAS tachometer on OSP strip</td><td><span class="pill lo">Disabled</span></td></tr>
+      <tr><td>Engine type select (0x14, SW2) with reference engine</td><td><span class="pill open">Open</span></td></tr>
+      <tr><td>LIN timeout to idle RPM</td><td><span class="pill open">Open</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">9.2</span>Fixes that must not be undone</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Fix</th><th>Where</th><th>What breaks without it</th></tr></thead>
+      <tbody>
+      <tr><td class="k">RF11 TRIS = 1 before <code>osp_init()</code></td><td class="mono">osp_board.c</td><td>SIOP held low, supply test fails, no LEDs found</td></tr>
+      <tr><td class="k">CLK9 = PLL1 Out 200 MHz</td><td class="mono">osp_board.c</td><td>MCC leaves CLK9 at 12.288 MHz, SPI2 far too slow</td></tr>
+      <tr><td class="k">Interrupts off around DMA trigger + DISSDO</td><td class="mono">osp.c</td><td>Random OSP CRC errors under audio load</td></tr>
+      <tr><td class="k">No Modbus poll in AVAS loop</td><td class="mono">audio_demo.c</td><td>1 ms tasks run every ~10 ms</td></tr>
+      <tr><td class="k">Reverb / delay union</td><td class="mono">audio_demo.c</td><td>Stack overflow, reset loop</td></tr>
+      <tr><td class="k">300 ms delay before <code>osp_init()</code></td><td class="mono">audio_demo.c</td><td>INITBIDIR fails after cold power cycle</td></tr>
+      <tr><td class="k">Repeated indicator frames ignored</td><td class="mono">audio_demo.c</td><td>Parking stays solid when HMI repeats faster than 500 ms</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="sec">
+    <h3><span class="n">9.3</span>Technical findings</h3>
+    <div>
+      <p class="cap">Table 9-1: <span>Code review findings</span></p>
+      <div class="tbl"><table>
+        <thead><tr><th>ID</th><th>Severity</th><th>Area</th><th>Finding</th><th>Suggested action</th></tr></thead>
+        <tbody>
+        <tr><td class="mono">F1</td><td><span class="pill md">Medium</span></td><td>Indicator</td><td><code>OSP_DrawIndicatorWave()</code> splits at a fixed LED 21. With fewer than 22 LEDs, <code>right_count = num_leds - 21</code> wraps (uint8_t), the left wave draws nothing, and the right wave writes LED addresses that do not exist.</td><td>Use <code>half = min(21, num_leds / 2)</code> or skip the left half when <code>num_leds &le; 21</code>.</td></tr>
+        <tr><td class="mono">F2</td><td><span class="pill md">Medium</span></td><td>AVAS</td><td>With <code>USE_REF_ENGINE = 1</code> the engine is always <code>ENG_V8</code>; LIN 0x14 and SW2 only change an unused variable. The start-up text still prints &ldquo;SW2: Toggle V8/Bullet&rdquo; and &ldquo;Single-cylinder thumper&rdquo;.</td><td>Pass the engine type to <code>EngineSynthWrap_init()</code>, or remove the option and the text.</td></tr>
+        <tr><td class="mono">F3</td><td><span class="pill lo">Low</span></td><td>AVAS</td><td><code>AVAS_LIN_TIMEOUT_MS = 0</code>: if the HMI stops, the engine keeps the last RPM.</td><td>Enable once the HMI sends frames periodically.</td></tr>
+        <tr><td class="mono">F4</td><td><span class="pill lo">Low</span></td><td>Interrupts</td><td>Comments in <code>osp_board.c</code> and <code>adc_audio.h</code> say AD4CH7 runs at priority 6; <code>INTERRUPT_Initialize()</code> sets 4 (6 only with FIR_DECIMATION). Behaviour is fine (PWM3 at 5 pre-empts).</td><td>Correct the comments.</td></tr>
+        <tr><td class="mono">F5</td><td><span class="pill lo">Low</span></td><td>Pins</td><td><code>pins.c</code> still maps SPI1 SDO1/SCK1/SDI1 to RF11/RF9/RF8, SS1 to RB12/RG2, REFO1 to RG0 and PCI8. <code>osp_init()</code> overwrites the RF pins; the rest is unused with NO_CODEC.</td><td>Remove the codec routes in MCC.</td></tr>
+        <tr><td class="mono">F6</td><td><span class="pill lo">Low</span></td><td>Comments</td><td><code>adc_audio.h</code> says the XPRO1 inputs are RB3/RB4; the code uses AD4AN0 = RB4 and AD4AN1 = RB6.</td><td>Correct the comment.</td></tr>
+        <tr><td class="mono">F7</td><td><span class="pill lo">Low</span></td><td>Pins</td><td>RB4 (left audio in, pin 57) is also PGC1.</td><td>Confirm the DIM debugger uses another PGC/PGD pair.</td></tr>
+        <tr><td class="mono">F8</td><td><span class="pill lo">Low</span></td><td>Test</td><td>S1 + S2 at start-up sets loopback mode (400 Hz tone), but <code>AudioTasks()</code> returns before the tone code in AVAS_MODE.</td><td>Remove the check from the AVAS build or move the tone into the AVAS path.</td></tr>
+        <tr><td class="mono">F9</td><td><span class="pill lo">Low</span></td><td>Timing</td><td><code>LIN_DEBUG = 1</code> prints one line per frame on UART1 (~87 &micro;s per character, blocking).</td><td>Set 0 for production.</td></tr>
+        <tr><td class="mono">F10</td><td><span class="pill lo">Low</span></td><td>OSP</td><td><code>OSP_Audio_SetNumLEDs()</code> turns off LEDs from <code>i = num_leds</code>, which is the last active LED, not the first unused one.</td><td>Start at <code>num_leds + 1</code>.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+</div></main>
+
+<footer><div class="wrap"><span>Codec-Less Audio LED AVAS &middot; Microchip Technology Inc.</span></div></footer>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('nav.tabs button'));
+  var pages = Array.prototype.slice.call(document.querySelectorAll('section.page'));
+  var heroTitle = document.getElementById('hero-title'),
+      heroLead = document.getElementById('hero-lead'), crumb = document.getElementById('crumb');
+
+  function show(id, scroll) {
+    var target = document.getElementById(id);
+    if (!target || !target.classList.contains('page')) id = 'overview';
+    pages.forEach(function (p) {
+      var on = p.id === id;
+      p.hidden = !on;
+      if (on) {
+        heroTitle.textContent = p.querySelector('.intro h2').textContent;
+        heroLead.textContent = p.querySelector('.intro p').textContent;
+      }
+    });
+    tabs.forEach(function (t) {
+      var on = t.dataset.tab === id;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      if (on) {
+        crumb.textContent = t.textContent;
+        if (t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    });
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    if (scroll) window.scrollTo(0, 0);
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { show(t.dataset.tab, true); });
+    t.addEventListener('keydown', function (e) {
+      var n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : null;
+      if (n === null) return;
+      n = (n + tabs.length) % tabs.length;
+      tabs[n].focus();
+      show(tabs[n].dataset.tab, false);
+    });
+  });
+  show((location.hash || '#overview').slice(1), false);
+
+  // LIN frame builder: same checksum as LIN_Calculate_Checksum(id, data, 4, false)
+  var idEl = document.getElementById('fb-id'), out = document.getElementById('fb-out');
+  var dEl = [document.getElementById('fb-d1'), document.getElementById('fb-d2'), document.getElementById('fb-d3')];
+  var rpmEl = document.getElementById('fb-rpm');
+  var lastFrame = '';
+  function hx(b) { return ('0' + b.toString(16).toUpperCase()).slice(-2); }
+  function num(s) {
+    s = String(s).trim();
+    if (/^0x[0-9a-f]+$/i.test(s)) return parseInt(s, 16);
+    if (/^[0-9]+$/.test(s)) return parseInt(s, 10);
+    return NaN;
+  }
+  function checksum(data) {
+    var s = 0;
+    data.forEach(function (b) { s += b; if (s > 0xFF) s = (s & 0xFF) + 1; });
+    return (~s) & 0xFF;
+  }
+  function render() {
+    var d = [parseInt(idEl.value, 10)];
+    for (var i = 0; i < 3; i++) {
+      var v = num(dEl[i].value);
+      if (isNaN(v) || v < 0 || v > 255) { out.textContent = 'D' + (i + 1) + ' must be 0-255 (decimal or 0x hex).'; lastFrame = ''; return; }
+      d.push(v);
+    }
+    var f = [0x55, 0xE2].concat(d, [checksum(d)]);
+    lastFrame = f.map(hx).join(' ');
+    out.innerHTML = '';
+    var br = document.createElement('span'); br.className = 's'; br.textContent = 'BREAK '; out.appendChild(br);
+    f.forEach(function (b, k) {
+      var s = document.createElement('span');
+      if (k < 2 || k === f.length - 1) s.className = 's';
+      s.textContent = hx(b) + ' ';
+      out.appendChild(s);
+    });
+    var info = document.createElement('div');
+    info.className = 'info';
+    info.textContent = 'Signal 0x' + hx(d[0]) + ', checksum 0x' + hx(f[f.length - 1]) + ' (classic, data bytes only). PID 0xE2 = ID 0x22.';
+    out.appendChild(info);
+  }
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  idEl.addEventListener('change', render);
+  dEl.forEach(function (e) { e.addEventListener('input', render); });
+  rpmEl.addEventListener('input', function () {
+    var r = num(rpmEl.value);
+    if (isNaN(r) || r < 0 || r > 65535) return;
+    idEl.value = '17';
+    dEl[0].value = String((r >> 8) & 0xFF); dEl[1].value = String(r & 0xFF); dEl[2].value = '0';
+    render();
+  });
+  document.getElementById('fb-copy').addEventListener('click', function (e) {
+    var btn = e.currentTarget;
+    if (!lastFrame) return;
+    var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy frame'; }, 1400); };
+    try { navigator.clipboard.writeText(lastFrame).then(done, selectOut); } catch (err) { selectOut(); }
+  });
+  render();
+})();
+</script>
